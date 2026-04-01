@@ -71,8 +71,36 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
 
-    // TODO: Send notification email to the student
-    // You can implement email notification here using your email service
+    // Send in-app notification to the student
+    const notificationMessages: Record<string, { title: string; message: string }> = {
+      VERIFIED: {
+        title: "Profile Verified",
+        message: "Your profile has been verified by the placement cell. You are now eligible to apply for placement opportunities.",
+      },
+      REJECTED: {
+        title: "Profile Verification Rejected",
+        message: `Your profile verification was rejected. ${sanitizedNotes ? `Reason: ${sanitizedNotes}` : "Please contact the placement cell for more details."}`,
+      },
+      PENDING: {
+        title: "Profile Under Review",
+        message: "Your profile has been marked as pending review by the placement cell.",
+      },
+    }
+
+    const notif = notificationMessages[status]
+    if (notif) {
+      await prisma.notification.create({
+        data: {
+          userId: existingProfile.userId,
+          title: notif.title,
+          message: notif.message,
+          type: "KYC_UPDATE",
+        },
+      }).catch((err: unknown) => {
+        // Non-fatal — log but don't fail the KYC update
+        console.error("Failed to create KYC notification:", err)
+      })
+    }
 
     return NextResponse.json({
       success: true,
