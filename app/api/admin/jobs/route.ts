@@ -1,15 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin, sanitizeInput, logSecurityEvent } from "@/lib/auth-helpers"
-
-// Helper to determine tier from salary
-function determineTier(salary: number | null, isDreamOffer: boolean): string {
-    if (isDreamOffer) return "DREAM"
-    if (!salary) return "TIER_3"
-    if (salary > 9) return "TIER_1"
-    if (salary > 5) return "TIER_2"
-    return "TIER_3"
-}
+import { determineTier } from "@/lib/placement-rules"
 
 // Helper to notify eligible students about new job
 async function notifyEligibleStudents(jobId: string, jobTitle: string, companyName: string, allowedBranches: string[]) {

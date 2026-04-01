@@ -1,13 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin, logSecurityEvent } from "@/lib/auth-helpers"
-
-// Helper to determine tier from salary
-function determineTierFromSalary(salary: number): string {
-    if (salary > 9) return "TIER_1"
-    if (salary > 5) return "TIER_2"
-    return "TIER_3"
-}
+import { determineTier } from "@/lib/placement-rules"
 
 // GET - List all placements
 export async function GET(request: NextRequest) {
@@ -122,7 +116,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Determine tier if not provided
-        const placementTier = tier || determineTierFromSalary(parseFloat(salary))
+        const placementTier = tier || determineTier(parseFloat(salary), false)
 
         // Check for existing placement at same tier (unless exception)
         if (!isException) {

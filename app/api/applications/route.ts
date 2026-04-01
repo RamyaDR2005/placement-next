@@ -1,25 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-
-// Helper to check tier eligibility (same logic as jobs API)
-function canApplyToTier(studentTier: string | null, jobTier: string, isDreamOffer: boolean): { eligible: boolean; reason?: string } {
-    if (isDreamOffer) return { eligible: true }
-    if (!studentTier) return { eligible: true }
-    
-    if (studentTier === "TIER_1") {
-        return { eligible: false, reason: "You are already placed in Tier 1 and blocked from further placements" }
-    }
-    if (studentTier === "TIER_2") {
-        if (jobTier === "TIER_1") return { eligible: true }
-        return { eligible: false, reason: "You are placed in Tier 2. You can only apply for Tier 1 jobs" }
-    }
-    if (studentTier === "TIER_3") {
-        if (jobTier === "TIER_1" || jobTier === "TIER_2") return { eligible: true }
-        return { eligible: false, reason: "You are placed in Tier 3. You can only apply for Tier 1 or Tier 2 jobs" }
-    }
-    return { eligible: true }
-}
+import { canApplyToTier, getHighestTier } from "@/lib/placement-rules"
 
 // GET - Get user's applications (simplified)
 export async function GET(request: NextRequest) {
@@ -174,16 +156,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Your profile must be verified before applying" }, { status: 400 })
         }
 
-        // Determine highest tier placement
-        let highestTierPlacement: string | null = null
-        const tierOrder = ["TIER_1", "TIER_2", "TIER_3"]
-        for (const placement of userPlacements) {
-            if (!placement.isException) {
-                if (!highestTierPlacement || tierOrder.indexOf(placement.tier) < tierOrder.indexOf(highestTierPlacement)) {
-                    highestTierPlacement = placement.tier
-                }
-            }
-        }
+        // Determine highest tier placement (exceptions don't count toward tier lock)
+        const highestTierPlacement = getHighestTier(userPlacements.filter((p) => !p.isException))
 
         // Check tier eligibility
         const tierCheck = canApplyToTier(highestTierPlacement, job.tier, job.isDreamOffer)

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { getSiteSettings } from "@/lib/settings"
+import { canApplyToTier, getHighestTier } from "@/lib/placement-rules"
 
 type JobWithDetails = {
     id: string
@@ -36,42 +37,6 @@ type JobWithDetails = {
     _count: {
         applications: number
     }
-}
-
-// Helper to check tier eligibility
-function canApplyToTier(studentTier: string | null, jobTier: string, isDreamOffer: boolean): { eligible: boolean; reason?: string } {
-    // Dream offers are open to everyone
-    if (isDreamOffer) {
-        return { eligible: true }
-    }
-
-    // If student has no placement, they can apply to any tier
-    if (!studentTier) {
-        return { eligible: true }
-    }
-
-    // Tier 1 placed students are blocked from all placements
-    if (studentTier === "TIER_1") {
-        return { eligible: false, reason: "You are already placed in Tier 1 and blocked from further placements" }
-    }
-
-    // Tier 2 placed students can only apply to Tier 1
-    if (studentTier === "TIER_2") {
-        if (jobTier === "TIER_1") {
-            return { eligible: true }
-        }
-        return { eligible: false, reason: "You are placed in Tier 2. You can only apply for Tier 1 jobs (>9 LPA)" }
-    }
-
-    // Tier 3 placed students can apply to Tier 2 and Tier 1
-    if (studentTier === "TIER_3") {
-        if (jobTier === "TIER_1" || jobTier === "TIER_2") {
-            return { eligible: true }
-        }
-        return { eligible: false, reason: "You are placed in Tier 3. You can only apply for Tier 1 or Tier 2 jobs" }
-    }
-
-    return { eligible: true }
 }
 
 // GET - List active jobs for students
@@ -142,16 +107,8 @@ export async function GET(request: NextRequest) {
             })
         ])
 
-        // Determine highest tier placement
-        let highestTierPlacement: string | null = null
-        const tierOrder = ["TIER_1", "TIER_2", "TIER_3"]
-        for (const placement of userPlacements) {
-            if (!placement.isException) {
-                if (!highestTierPlacement || tierOrder.indexOf(placement.tier) < tierOrder.indexOf(highestTierPlacement)) {
-                    highestTierPlacement = placement.tier
-                }
-            }
-        }
+        // Determine highest tier placement (exceptions don't count toward tier lock)
+        const highestTierPlacement = getHighestTier(userPlacements.filter((p) => !p.isException))
 
         const [jobs, total] = await Promise.all([
             prisma.job.findMany({
