@@ -64,6 +64,9 @@ model User {
   applications Application[]
   placements   Placement[]
 
+  // Backup Relations
+  backupLogs BackupLog[]
+
   @@map("users")
 }
 
@@ -732,4 +735,54 @@ model DeadlineReminder {
   sentAt DateTime @default(now()) @map("sent_at")
 
   @@map("deadline_reminders")
+}
+
+// Admin Settings - Singleton (always use id: "default")
+model AdminSettings {
+  id                   String   @id @default("default")
+  activeAdmissionYears String[] @default(["22"]) @map("active_admission_years")
+  collegeCode          String   @default("2SD") @map("college_code")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  updatedBy            String?  @map("updated_by")
+
+  @@map("admin_settings")
+}
+
+// Site Settings - Singleton (always use id: "default")
+model SiteSettings {
+  id                  String   @id @default("default")
+  placementSeasonName String   @default("Placement Season 2025-26") @map("placement_season_name")
+  activeBatch         String   @default("2022 - 2026") @map("active_batch")
+  announcementText    String?  @map("announcement_text")
+  announcementActive  Boolean  @default(false) @map("announcement_active")
+  registrationOpen    Boolean  @default(true) @map("registration_open")
+  dashboardWidgets    Json     @default("{}") @map("dashboard_widgets")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  updatedBy           String?  @map("updated_by")
+
+  @@map("site_settings")
+}
+
+// Backup Log - Audit trail for data exports
+model BackupLog {
+  id           String       @id @default(cuid())
+  adminId      String       @map("admin_id")
+  admin        User         @relation(fields: [adminId], references: [id])
+  batchYear    String       @map("batch_year")
+  status       BackupStatus @default(PENDING)
+  recordCount  Int          @default(0) @map("record_count")
+  fileSize     Int?         @map("file_size")
+  fields       String[]
+  errorMessage String?      @map("error_message")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  completedAt  DateTime?    @map("completed_at")
+
+  @@index([adminId])
+  @@map("backup_logs")
+}
+
+enum BackupStatus {
+  PENDING
+  COMPLETED
+  FAILED
 }
