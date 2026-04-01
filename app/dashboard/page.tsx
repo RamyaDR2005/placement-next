@@ -20,6 +20,7 @@ import {
   IconDownload
 } from "@tabler/icons-react"
 import Link from "next/link"
+import { format } from "date-fns"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -54,14 +55,13 @@ export default async function DashboardPage() {
     myApplications,
     upcomingEvents,
     totalStudents,
-    verifiedProfiles
+    verifiedProfiles,
+    recentJobs,
+    upcomingEventsList,
   ] = await Promise.all([
     prisma.job.count().catch(() => 0),
     prisma.job.count({
-      where: {
-        status: 'ACTIVE',
-        isVisible: true
-      }
+      where: { status: 'ACTIVE', isVisible: true }
     }).catch(() => 0),
     isAdmin ? Promise.resolve(null) : prisma.application.count({
       where: { userId: session.user.id }
@@ -73,12 +73,39 @@ export default async function DashboardPage() {
         isVisible: true
       }
     }).catch(() => 0),
-    isAdmin ? prisma.user.count({
-      where: { role: 'STUDENT' }
-    }).catch(() => 0) : Promise.resolve(null),
-    isAdmin ? prisma.profile.count({
-      where: { kycStatus: 'VERIFIED' }
-    }).catch(() => 0) : Promise.resolve(null)
+    isAdmin ? prisma.user.count({ where: { role: 'STUDENT' } }).catch(() => 0) : Promise.resolve(null),
+    isAdmin ? prisma.profile.count({ where: { kycStatus: 'VERIFIED' } }).catch(() => 0) : Promise.resolve(null),
+    // Recent active jobs for the "Recent Job Openings" card
+    prisma.job.findMany({
+      where: { status: 'ACTIVE', isVisible: true },
+      orderBy: { createdAt: 'desc' },
+      take: 4,
+      select: {
+        id: true,
+        title: true,
+        companyName: true,
+        salary: true,
+        tier: true,
+        deadline: true,
+      }
+    }).catch(() => []),
+    // Upcoming events
+    prisma.scheduleEvent.findMany({
+      where: {
+        date: { gte: new Date() },
+        status: { in: ['SCHEDULED', 'ONGOING'] },
+        isVisible: true,
+      },
+      orderBy: { date: 'asc' },
+      take: 4,
+      select: {
+        id: true,
+        title: true,
+        date: true,
+        location: true,
+        type: true,
+      }
+    }).catch(() => []),
   ])
 
   // Calculate profile completion
@@ -370,11 +397,29 @@ export default async function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <IconBriefcase className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                <p>No active jobs at the moment</p>
-                <p className="text-xs mt-1">Check back later for new opportunities</p>
-              </div>
+              {recentJobs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <IconBriefcase className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p>No active jobs at the moment</p>
+                  <p className="text-xs mt-1">Check back later for new opportunities</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {recentJobs.map((job) => (
+                    <Link key={job.id} href={`/jobs/${job.id}`} className="flex items-center justify-between py-3 hover:bg-muted/40 px-1 rounded transition-colors">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{job.title}</p>
+                        <p className="text-xs text-muted-foreground">{job.companyName} · {job.salary} LPA</p>
+                      </div>
+                      {job.deadline && (
+                        <span className="text-xs text-muted-foreground ml-3 shrink-0">
+                          Due {format(new Date(job.deadline), "MMM d")}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -392,11 +437,27 @@ export default async function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <IconCalendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                <p>No upcoming events</p>
-                <p className="text-xs mt-1">Events will appear here when scheduled</p>
-              </div>
+              {upcomingEventsList.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <IconCalendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p>No upcoming events</p>
+                  <p className="text-xs mt-1">Events will appear here when scheduled</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {upcomingEventsList.map((event) => (
+                    <div key={event.id} className="flex items-center justify-between py-3 px-1">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{event.title}</p>
+                        <p className="text-xs text-muted-foreground">{event.location ?? event.type}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-3 shrink-0">
+                        {format(new Date(event.date), "MMM d, h:mm a")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
