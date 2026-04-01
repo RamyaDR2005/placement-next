@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
                 where: { id: applicationId },
                 include: {
                     job: {
-                        select: { id: true, title: true, company: true }
+                        select: { id: true, title: true, companyName: true }
                     }
                 }
             })
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
                 },
                 job: {
                     title: application.job.title,
-                    company: application.job.company
+                    company: application.job.companyName
                 },
                 scannedAt: newAttendance.scannedAt
             })
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
             const job = attendance.jobId ? await prisma.job.findUnique({
                 where: { id: attendance.jobId },
-                select: { title: true, company: true }
+                select: { title: true, companyName: true }
             }) : null
 
             return NextResponse.json({
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
                 },
                 job: job ? {
                     title: job.title,
-                    company: job.company
+                    company: job.companyName
                 } : null,
                 scannedAt: attendance.scannedAt
             }, { status: 409 })
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
 
         const job = attendance.jobId ? await prisma.job.findUnique({
             where: { id: attendance.jobId },
-            select: { title: true, company: true }
+            select: { title: true, companyName: true }
         }) : null
 
         logSecurityEvent("attendance_recorded", {
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
             },
             job: job ? {
                 title: job.title,
-                company: job.company
+                company: job.companyName
             } : null,
             scannedAt: updatedAttendance.scannedAt
         })

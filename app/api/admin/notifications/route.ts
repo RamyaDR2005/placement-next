@@ -62,7 +62,7 @@ export async function POST(req: Request) {
                         { status: 400 }
                     )
                 }
-                userFilter.profile = { graduationYear: parseInt(targetValue) }
+                userFilter.profile = { batch: { startsWith: targetValue } }
                 break
             case "specific":
                 if (!targetValue || !Array.isArray(targetValue) || targetValue.length === 0) {
