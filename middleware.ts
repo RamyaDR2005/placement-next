@@ -51,6 +51,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/verify-email") ||
+    pathname.startsWith("/not-authorized") ||
     pathname.includes(".")
   ) {
     return response

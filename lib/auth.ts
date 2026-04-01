@@ -5,6 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { sendVerificationEmail } from "@/lib/email"
+import { logSecurityEvent } from "@/lib/auth-helpers"
 
 // Ensure JWT secret is set
 if (!process.env.AUTH_SECRET) {
@@ -110,6 +111,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token.id = user.id
         // Add timestamp for session validation
         token.iat = Math.floor(Date.now() / 1000)
+
+        // Fetch USN from profile
+        const profile = await prisma.profile.findUnique({
+          where: { userId: user.id },
+          select: { usn: true }
+        })
+        token.usn = profile?.usn ?? null
       }
 
       // On session update, refresh user data from database
@@ -125,6 +133,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           token.name = dbUser.name
           token.picture = dbUser.image
         }
+
+        // Refresh USN from profile
+        const profile = await prisma.profile.findUnique({
+          where: { userId: token.sub! },
+          select: { usn: true }
+        })
+        token.usn = profile?.usn ?? null
       }
 
       return token
@@ -136,6 +151,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         session.user.email = token.email!
         session.user.name = token.name
         session.user.image = token.picture
+        session.user.usn = token.usn
       }
       return session
     },
@@ -162,7 +178,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     },
     async signIn({ user }) {
       // Log sign in for security monitoring
-      console.log(`User signed in: ${user.email} at ${new Date().toISOString()}`)
+      logSecurityEvent("user_signin", { userId: user.id, timestamp: new Date().toISOString() })
     }
   },
   // Enable debug only in development
