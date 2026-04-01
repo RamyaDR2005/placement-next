@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
+import { getSiteSettings } from "@/lib/settings"
 import { AdminDashboardView } from "@/components/admin/admin-dashboard-view"
 
 export default async function AdminDashboardPage() {
@@ -22,6 +23,8 @@ export default async function AdminDashboardPage() {
     redirect("/dashboard")
   }
 
+  const siteSettings = await getSiteSettings()
+
   // Fetch comprehensive dashboard data
   const [
     totalStudents,
@@ -35,7 +38,12 @@ export default async function AdminDashboardPage() {
     recentActivities,
     placementStats,
     branchWiseStats,
-    monthlyTrends
+    monthlyTrends,
+    // Batch-specific stats
+    batchStudents,
+    batchPlacedStudents,
+    batchPlacements,
+    tierDistribution
   ] = await Promise.all([
     // Total registered students
     prisma.user.count({
@@ -57,23 +65,21 @@ export default async function AdminDashboardPage() {
       where: { role: 'RECRUITER' }
     }),
 
-    // Active job postings (using scheduled events as proxy)
-    prisma.scheduleEvent.count({
+    // Active job postings (fixed: was using scheduleEvent)
+    prisma.job.count({
       where: {
-        status: 'SCHEDULED',
-        date: { gte: new Date() }
+        status: 'ACTIVE',
+        isVisible: true
       }
     }),
 
-    // Total applications (using profile count as proxy)
-    prisma.profile.count(),
-
-    // Placed students (verified profiles as proxy)
-    prisma.profile.count({
-      where: {
-        kycStatus: 'VERIFIED'
-      }
+    // Total applications (fixed: was using profile count)
+    prisma.application.count({
+      where: { isRemoved: false }
     }),
+
+    // Placed students (fixed: was using verified profile count)
+    prisma.placement.count(),
 
     // Upcoming interviews/events
     prisma.scheduleEvent.count({
@@ -81,7 +87,7 @@ export default async function AdminDashboardPage() {
         status: 'SCHEDULED',
         date: {
           gte: new Date(),
-          lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Next 7 days
+          lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         }
       }
     }),
@@ -116,16 +122,58 @@ export default async function AdminDashboardPage() {
 
     // Monthly registration trends (last 6 months)
     prisma.$queryRaw<{ month: Date; count: bigint }[]>`
-      SELECT 
-        DATE_TRUNC('month', "createdAt") as month,
+      SELECT
+        DATE_TRUNC('month', "created_at") as month,
         COUNT(*) as count
       FROM users
-      WHERE role = 'STUDENT' 
-        AND "createdAt" >= NOW() - INTERVAL '6 months'
-      GROUP BY DATE_TRUNC('month', "createdAt")
+      WHERE role = 'STUDENT'
+        AND "created_at" >= NOW() - INTERVAL '6 months'
+      GROUP BY DATE_TRUNC('month', "created_at")
       ORDER BY month ASC
-    `
+    `,
+
+    // Batch-specific: students in active batch
+    prisma.profile.count({
+      where: { batch: { startsWith: siteSettings.activeBatch.substring(0, 4) } }
+    }),
+
+    // Batch-specific: placed students in active batch
+    prisma.placement.count({
+      where: {
+        user: {
+          profile: {
+            batch: { startsWith: siteSettings.activeBatch.substring(0, 4) }
+          }
+        }
+      }
+    }),
+
+    // Batch-specific: placements with salary for avg calculation
+    prisma.placement.findMany({
+      where: {
+        user: {
+          profile: {
+            batch: { startsWith: siteSettings.activeBatch.substring(0, 4) }
+          }
+        }
+      },
+      select: { salary: true, tier: true }
+    }),
+
+    // Tier distribution
+    prisma.placement.groupBy({
+      by: ['tier'],
+      _count: { tier: true }
+    })
   ])
+
+  const avgPackage = batchPlacements.length > 0
+    ? batchPlacements.reduce((sum, p) => sum + p.salary, 0) / batchPlacements.length
+    : 0
+
+  const placementRate = batchStudents > 0
+    ? Math.round((batchPlacedStudents / batchStudents) * 100)
+    : 0
 
   const dashboardData = {
     overview: {
@@ -137,6 +185,23 @@ export default async function AdminDashboardPage() {
       totalApplications,
       placedStudents,
       upcomingInterviews
+    },
+    batchStats: {
+      batchStudents,
+      batchPlacedStudents,
+      avgPackage,
+      placementRate,
+      tierDistribution: tierDistribution.map(t => ({
+        tier: t.tier,
+        count: t._count.tier
+      }))
+    },
+    siteSettings: {
+      placementSeasonName: siteSettings.placementSeasonName,
+      activeBatch: siteSettings.activeBatch,
+      announcementText: siteSettings.announcementText,
+      announcementActive: siteSettings.announcementActive,
+      registrationOpen: siteSettings.registrationOpen,
     },
     activities: recentActivities,
     stats: {

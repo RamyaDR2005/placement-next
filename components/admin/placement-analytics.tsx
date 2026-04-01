@@ -235,7 +235,7 @@ export function PlacementAnalytics({ data }: PlacementAnalyticsProps) {
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    formatter={(value: number) => [value, 'Applications']}
+                                    formatter={(value) => [value as number, 'Applications']}
                                 />
                                 <Legend
                                     verticalAlign="bottom"

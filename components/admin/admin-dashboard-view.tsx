@@ -52,6 +52,22 @@ interface DashboardOverview {
   upcomingInterviews: number
 }
 
+interface BatchStats {
+  batchStudents: number
+  batchPlacedStudents: number
+  avgPackage: number
+  placementRate: number
+  tierDistribution: { tier: string; count: number }[]
+}
+
+interface SiteSettingsData {
+  placementSeasonName: string
+  activeBatch: string
+  announcementText: string | null
+  announcementActive: boolean
+  registrationOpen: boolean
+}
+
 interface DashboardActivity {
   id: string
   firstName: string | null
@@ -72,6 +88,8 @@ interface DashboardStats {
 
 interface AdminDashboardData {
   overview: DashboardOverview
+  batchStats: BatchStats
+  siteSettings: SiteSettingsData
   activities: DashboardActivity[]
   stats: DashboardStats
   user: {
@@ -86,8 +104,22 @@ interface AdminDashboardViewProps {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
+const TIER_COLORS: Record<string, string> = {
+  TIER_1: '#22c55e',
+  TIER_2: '#3b82f6',
+  TIER_3: '#f59e0b',
+  DREAM: '#8b5cf6',
+}
+
+const TIER_LABELS: Record<string, string> = {
+  TIER_1: 'Tier 1 (>9 LPA)',
+  TIER_2: 'Tier 2 (5-9 LPA)',
+  TIER_3: 'Tier 3 (<=5 LPA)',
+  DREAM: 'Dream (>10 LPA)',
+}
+
 export function AdminDashboardView({ data }: AdminDashboardViewProps) {
-  const { overview, activities, stats, user } = data
+  const { overview, batchStats, siteSettings, activities, stats, user } = data
 
   // Format monthly trends data
   const monthlyData = stats.monthlyTrends.map(item => ({
@@ -134,7 +166,67 @@ export function AdminDashboardView({ data }: AdminDashboardViewProps) {
       </div>
 
       <div className="container mx-auto max-w-7xl px-4 py-6 space-y-6">
-        {/* Key Metrics Cards */}
+        {/* Announcement Banner */}
+        {siteSettings.announcementActive && siteSettings.announcementText && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <p className="text-sm font-medium text-blue-900">
+                {siteSettings.announcementText}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Current Season Stats */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>{siteSettings.placementSeasonName}</CardTitle>
+                <CardDescription>Batch: {siteSettings.activeBatch} {!siteSettings.registrationOpen && " | Registration Closed"}</CardDescription>
+              </div>
+              <Badge variant={siteSettings.registrationOpen ? "default" : "secondary"}>
+                {siteSettings.registrationOpen ? "Registration Open" : "Registration Closed"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Batch Students</p>
+                <p className="text-2xl font-bold">{batchStats.batchStudents}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Placed</p>
+                <p className="text-2xl font-bold">{batchStats.batchPlacedStudents}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Avg Package</p>
+                <p className="text-2xl font-bold">{batchStats.avgPackage > 0 ? `${batchStats.avgPackage.toFixed(2)} LPA` : "N/A"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Placement Rate</p>
+                <p className="text-2xl font-bold">{batchStats.placementRate}%</p>
+              </div>
+            </div>
+            {batchStats.tierDistribution.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {batchStats.tierDistribution.map((t) => (
+                  <Badge
+                    key={t.tier}
+                    variant="outline"
+                    style={{ borderColor: TIER_COLORS[t.tier] || '#6b7280' }}
+                  >
+                    {TIER_LABELS[t.tier] || t.tier}: {t.count}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* All-Time Metrics */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -177,13 +269,13 @@ export function AdminDashboardView({ data }: AdminDashboardViewProps) {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Events</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{overview.activeJobPostings}</div>
               <p className="text-xs text-muted-foreground">
-                Scheduled placement events
+                Open job postings
               </p>
             </CardContent>
           </Card>
