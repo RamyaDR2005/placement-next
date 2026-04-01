@@ -198,7 +198,7 @@ export function DocumentUpload({
       )}
 
       {description && (
-        <p className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: description }} />
+        <p className="text-xs text-muted-foreground whitespace-pre-line">{description}</p>
       )}
     </div>
   )

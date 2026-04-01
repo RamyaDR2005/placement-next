@@ -229,7 +229,7 @@ export function PersonalInfoStep({ onNext, initialData = {} }: PersonalInfoStepP
               maxSizeMB={5}
               required={true}
               error={errors.profilePhoto}
-              description="• Passport-size photo (3.5cm x 4.5cm preferred)<br>• Clear, recent photograph with plain background<br>• Face should be clearly visible<br>• File formats: JPG, PNG • Maximum file size: 5MB"
+              description={"• Passport-size photo (3.5cm x 4.5cm preferred)\n• Clear, recent photograph with plain background\n• Face should be clearly visible\n• File formats: JPG, PNG • Maximum file size: 5MB"}
             />
           </div>
         </Card>

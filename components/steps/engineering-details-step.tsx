@@ -482,7 +482,7 @@ export function EngineeringDetailsStep({ onNext, onPrevious, initialData = {} }:
               required={true}
               error={errors.resumeUpload}
               initialFile={formData.resumeUpload as File | null}
-              description="• File name format: USN_Resume.pdf<br>• Maximum file size: 10MB<br>• PDF format only<br>• Include professional photo in resume"
+              description={"• File name format: USN_Resume.pdf\n• Maximum file size: 10MB\n• PDF format only\n• Include professional photo in resume"}
               placeholder="Drop your resume PDF here or click to select"
             />
           </CardContent>

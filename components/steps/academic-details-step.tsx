@@ -828,7 +828,7 @@ export function AcademicDetailsStep({ onNext, onPrevious, initialData = {} }: Ac
                   required={true}
                   error={errors.twelfthMarksCard}
                   initialFile={formData.twelfthMarksCard as File | null}
-                  description="• Format: USN_12th_Standard_Marks_Card.jpg/pdf<br>• Maximum file size: 20MB • JPG/PNG/PDF accepted"
+                  description={"• Format: USN_12th_Standard_Marks_Card.jpg/pdf\n• Maximum file size: 20MB • JPG/PNG/PDF accepted"}
                   placeholder="Drop your 12th marks card here or click to select"
                 />
               </CardContent>
@@ -1212,7 +1212,7 @@ export function AcademicDetailsStep({ onNext, onPrevious, initialData = {} }: Ac
                   required={true}
                   error={errors.diplomaCertificates}
                   initialFile={formData.diplomaCertificates as File | null}
-                  description="• Format: USN_Diploma_All_Semester.pdf<br>• Maximum file size: 200MB • PDF only<br>• Include all semester certificates in single PDF"
+                  description={"• Format: USN_Diploma_All_Semester.pdf\n• Maximum file size: 200MB • PDF only\n• Include all semester certificates in single PDF"}
                   placeholder="Drop your diploma certificates PDF here or click to select"
                 />
               </CardContent>
