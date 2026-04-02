@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sendVerificationEmail } from "@/lib/email"
+import { rateLimit, getClientIp } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
+  // 3 resend attempts per IP per 10 minutes
+  const ip = getClientIp(request)
+  const rl = rateLimit(`resend-verify:${ip}`, 3, 10 * 60 * 1000)
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait before requesting another verification email." },
+      { status: 429 }
+    )
+  }
+
   try {
     const { email } = await request.json()
 

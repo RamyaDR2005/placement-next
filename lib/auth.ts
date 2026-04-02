@@ -81,6 +81,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  // Required when running behind a reverse proxy (Nginx)
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
