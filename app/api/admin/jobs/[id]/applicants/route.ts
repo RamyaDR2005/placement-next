@@ -5,6 +5,9 @@ import { requireAdmin, logSecurityEvent } from "@/lib/auth-helpers"
 type ApplicationWithUser = {
     id: string
     appliedAt: Date
+    status: string
+    adminFeedback: string | null
+    interviewDate: Date | null
     isRemoved: boolean
     removedAt: Date | null
     removedBy: string | null
@@ -106,6 +109,9 @@ export async function GET(
         const applicants = applications.map((app: ApplicationWithUser) => ({
             applicationId: app.id,
             appliedAt: app.appliedAt,
+            status: app.status,
+            adminFeedback: app.adminFeedback,
+            interviewDate: app.interviewDate,
             isRemoved: app.isRemoved,
             removedAt: app.removedAt,
             removedBy: app.removedBy,

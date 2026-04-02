@@ -50,6 +50,7 @@ import {
     UserX,
     Users,
 } from "lucide-react"
+import { ApplicantActions } from "@/components/admin/applicant-actions"
 
 interface Applicant {
     id: string
@@ -62,7 +63,31 @@ interface Applicant {
     batch: string
     cgpa: number | null
     appliedAt: Date
+    status: string
+    adminFeedback: string | null
+    interviewDate: Date | null
     resumeUrl: string
+}
+
+const STATUS_BADGE_VARIANTS: Record<string, string> = {
+    APPLIED: "bg-blue-100 text-blue-800",
+    SHORTLISTED: "bg-yellow-100 text-yellow-800",
+    INTERVIEW_SCHEDULED: "bg-purple-100 text-purple-800",
+    INTERVIEWED: "bg-indigo-100 text-indigo-800",
+    SELECTED: "bg-green-100 text-green-800",
+    OFFER_ACCEPTED: "bg-emerald-100 text-emerald-800",
+    OFFER_REJECTED: "bg-orange-100 text-orange-800",
+    REJECTED: "bg-red-100 text-red-800",
+}
+
+function StatusBadge({ status }: { status: string }) {
+    const classes = STATUS_BADGE_VARIANTS[status] ?? "bg-gray-100 text-gray-800"
+    const label = status.replace(/_/g, " ")
+    return (
+        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${classes}`}>
+            {label}
+        </span>
+    )
 }
 
 interface ApplicantsTableProps {
@@ -318,6 +343,7 @@ export function ApplicantsTable({ jobId, jobTitle, applicants }: ApplicantsTable
                                         <TableHead>USN</TableHead>
                                         <TableHead>Branch</TableHead>
                                         <TableHead>CGPA</TableHead>
+                                        <TableHead>Status</TableHead>
                                         <TableHead>Applied</TableHead>
                                         <TableHead className="w-12"></TableHead>
                                     </TableRow>
@@ -370,54 +396,63 @@ export function ApplicantsTable({ jobId, jobTitle, applicants }: ApplicantsTable
                                                 )}
                                             </TableCell>
                                             <TableCell>
+                                                <StatusBadge status={applicant.status} />
+                                            </TableCell>
+                                            <TableCell>
                                                 <span className="text-sm text-muted-foreground">
                                                     {format(new Date(applicant.appliedAt), "MMM dd, yyyy")}
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        {applicant.resumeUrl && (
+                                                <div className="flex items-center gap-1">
+                                                    <ApplicantActions
+                                                        applicationId={applicant.id}
+                                                        currentStatus={applicant.status}
+                                                    />
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon">
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            {applicant.resumeUrl && (
+                                                                <DropdownMenuItem asChild>
+                                                                    <a
+                                                                        href={applicant.resumeUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                    >
+                                                                        <FileText className="h-4 w-4 mr-2" />
+                                                                        View Resume
+                                                                    </a>
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {applicant.phone && (
+                                                                <DropdownMenuItem asChild>
+                                                                    <a href={`tel:${applicant.phone}`}>
+                                                                        <Phone className="h-4 w-4 mr-2" />
+                                                                        Call
+                                                                    </a>
+                                                                </DropdownMenuItem>
+                                                            )}
                                                             <DropdownMenuItem asChild>
-                                                                <a
-                                                                    href={applicant.resumeUrl}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                >
-                                                                    <FileText className="h-4 w-4 mr-2" />
-                                                                    View Resume
+                                                                <a href={`mailto:${applicant.email}`}>
+                                                                    <Mail className="h-4 w-4 mr-2" />
+                                                                    Email
                                                                 </a>
                                                             </DropdownMenuItem>
-                                                        )}
-                                                        {applicant.phone && (
-                                                            <DropdownMenuItem asChild>
-                                                                <a href={`tel:${applicant.phone}`}>
-                                                                    <Phone className="h-4 w-4 mr-2" />
-                                                                    Call
-                                                                </a>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem
+                                                                className="text-destructive"
+                                                                onClick={() => openRemoveDialog(applicant.id)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                                Remove
                                                             </DropdownMenuItem>
-                                                        )}
-                                                        <DropdownMenuItem asChild>
-                                                            <a href={`mailto:${applicant.email}`}>
-                                                                <Mail className="h-4 w-4 mr-2" />
-                                                                Email
-                                                            </a>
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            className="text-destructive"
-                                                            onClick={() => openRemoveDialog(applicant.id)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4 mr-2" />
-                                                            Remove
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}

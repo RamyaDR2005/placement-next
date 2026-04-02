@@ -582,6 +582,11 @@ model Application {
   // Resume used at time of application
   resumeUsed String? @map("resume_used")
 
+  // Application lifecycle status
+  status        ApplicationStatus @default(APPLIED)
+  adminFeedback String?           @map("admin_feedback") @db.Text
+  interviewDate DateTime?         @map("interview_date")
+
   // Admin can remove mistaken applications
   isRemoved     Boolean   @default(false) @map("is_removed")
   removedAt     DateTime? @map("removed_at")
@@ -597,7 +602,19 @@ model Application {
   @@unique([jobId, userId])
   @@index([userId])
   @@index([jobId])
+  @@index([status])
   @@map("applications")
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
+  INTERVIEWED
+  SELECTED
+  OFFER_ACCEPTED
+  OFFER_REJECTED
+  REJECTED
 }
 
 enum JobStatus {

@@ -14,6 +14,9 @@ type ApplicationWithUser = {
     id: string
     userId: string
     appliedAt: Date
+    status: string
+    adminFeedback: string | null
+    interviewDate: Date | null
     resumeUsed: string | null
     user: {
         id: string
@@ -116,6 +119,9 @@ export default async function JobApplicantsPage({ params }: { params: Promise<{ 
             batch: profile?.batch || '',
             cgpa: profile?.cgpa ?? null,
             appliedAt: app.appliedAt,
+            status: app.status,
+            adminFeedback: app.adminFeedback,
+            interviewDate: app.interviewDate,
             resumeUrl: app.resumeUsed || profile?.resume || '',
         }
     })
