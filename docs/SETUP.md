@@ -1,11 +1,12 @@
-# Placement Portal - Setup Guide
+# CampusConnect — Setup Guide
 
 ## Prerequisites
 
-- Node.js 18+ or Bun 1.0+
-- PostgreSQL database (Neon recommended)
+- Node.js 18+ and pnpm
+- PostgreSQL database (Neon recommended for serverless)
 - Cloudflare R2 account (for file storage)
-- SMTP server or email service (for notifications)
+- SMTP server or Gmail app password (for email notifications)
+- Google Cloud Console project (for OAuth)
 
 ## Quick Start
 
@@ -14,29 +15,34 @@
 ```bash
 git clone <repository-url>
 cd placement-next
-bun install
+pnpm install
 ```
 
 ### 2. Environment Variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` and fill in all values:
 
+```bash
+cp .env.example .env
+```
+
+<!-- AUTO-GENERATED: env vars — sourced from .env.example -->
 ```env
 # Database (Neon PostgreSQL)
 DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
 
-# For migrations (direct connection without pooler)
+# Direct URL for migrations (without connection pooler)
 DIRECT_URL="postgresql://user:password@host/database?sslmode=require"
 
 # NextAuth.js
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here"
+NEXTAUTH_SECRET="your-secret-key-here"      # generate: openssl rand -base64 32
+NEXTAUTH_URL="http://localhost:3500"         # match the dev port
 
-# Google OAuth (optional)
+# Google OAuth
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 
-# Email (SMTP)
+# Email (SMTP / Gmail app password)
 SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"
 SMTP_USER="your-email@gmail.com"
@@ -58,6 +64,7 @@ VAPID_EMAIL="mailto:admin@example.com"
 # Cron Job Security
 CRON_SECRET="your-cron-secret"
 ```
+<!-- AUTO-GENERATED END -->
 
 ### 3. Generate VAPID Keys (for Push Notifications)
 
@@ -65,51 +72,113 @@ CRON_SECRET="your-cron-secret"
 npx web-push generate-vapid-keys
 ```
 
-Copy the generated keys to your `.env` file.
+Copy the output into `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`.
 
 ### 4. Database Setup
 
 ```bash
 # Generate Prisma Client
-bun run db:generate
+pnpm db:generate
 
-# Run migrations
-bun run db:migrate
+# Push schema to database (development, no migration file)
+pnpm db:push
 
-# (Optional) Open Prisma Studio
-bun run db:studio
+# Or create a tracked migration
+pnpm db:migrate
+
+# Optional: seed database with initial data
+pnpm db:seed
+
+# Optional: open Prisma Studio UI
+pnpm db:studio
 ```
 
 ### 5. Run Development Server
 
 ```bash
-bun run dev
+pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Opens at [http://localhost:3500](http://localhost:3500) (Turbopack enabled).
+
+---
+
+## Available Scripts
+
+<!-- AUTO-GENERATED: scripts — sourced from package.json -->
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server on port 3500 with Turbopack |
+| `pnpm build` | Generate Prisma client + production build |
+| `pnpm start` | Start production server |
+| `pnpm lint` | Run ESLint |
+| `pnpm lint:fix` | Auto-fix ESLint errors |
+| `pnpm type-check` | TypeScript type check (no emit) |
+| `pnpm format` | Format all files with Prettier |
+| `pnpm format:check` | Check formatting without writing |
+| `pnpm db:generate` | Regenerate Prisma client from schema |
+| `pnpm db:migrate` | Create and apply a migration (dev) |
+| `pnpm db:migrate:prod` | Apply pending migrations (production) |
+| `pnpm db:reset` | Reset database and re-run all migrations |
+| `pnpm db:studio` | Open Prisma Studio UI |
+| `pnpm db:push` | Push schema changes without migration file (dev) |
+| `pnpm db:seed` | Run seed script (`prisma/seed.ts`) |
+| `pnpm clean` | Remove `.next` and node_modules cache |
+| `pnpm analyze` | Production build with bundle analysis |
+<!-- AUTO-GENERATED END -->
+
+---
+
+## Project Structure
+
+```
+placement-next/
+├── app/                    # Next.js App Router pages
+│   ├── (auth)/            # Public auth pages (login, signup, verify-email)
+│   ├── admin/             # Admin pages — layout enforces ADMIN role
+│   ├── api/               # API routes (see docs/README.md for full reference)
+│   ├── applications/      # Student: my applications
+│   ├── dashboard/         # Student dashboard
+│   ├── documents/         # Student documents
+│   ├── jobs/              # Student job discovery
+│   ├── notifications/     # Student notifications
+│   ├── profile/           # Multi-step profile form
+│   └── settings/          # Student settings
+├── components/            # React components
+│   ├── admin/             # Admin-specific components
+│   ├── steps/             # Profile form steps
+│   └── ui/                # shadcn/ui primitives
+├── docs/                  # Documentation (this directory)
+├── hooks/                 # Custom React hooks
+├── lib/                   # Core utilities and configurations
+├── prisma/                # Database schema and migrations
+├── public/                # Static assets (including sw.js)
+└── types/                 # TypeScript type definitions
+```
+
+---
 
 ## Production Deployment
 
 ### Vercel (Recommended)
 
 1. Push code to GitHub
-2. Connect repository to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy
+2. Connect the repository to Vercel
+3. Add all environment variables in the Vercel dashboard
+4. Set `NEXTAUTH_URL` to your production domain
+5. Deploy — `pnpm build` runs automatically (includes `prisma generate`)
 
-### Environment Variables for Production
+### Run Migrations in Production
 
-Make sure to set:
-- `NEXTAUTH_URL` to your production domain
-- `DATABASE_URL` with connection pooling enabled
-- All other required environment variables
+```bash
+# In CI / Vercel build step (add as a pre-build command)
+pnpm db:migrate:prod
+```
 
 ### Cron Jobs
 
-The project uses Vercel Cron for scheduled tasks:
-- `/api/cron/deadline-reminders` - Runs hourly to send deadline reminders
+Add `vercel.json` to configure the deadline-reminder cron:
 
-Configure in `vercel.json`:
 ```json
 {
   "crons": [
@@ -121,70 +190,42 @@ Configure in `vercel.json`:
 }
 ```
 
-## Available Scripts
+The cron endpoint requires `Authorization: Bearer <CRON_SECRET>` header (Vercel adds this automatically).
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start development server with Turbopack |
-| `bun run build` | Build for production |
-| `bun run start` | Start production server |
-| `bun run lint` | Run ESLint |
-| `bun run lint:fix` | Fix ESLint errors |
-| `bun run db:generate` | Generate Prisma Client |
-| `bun run db:migrate` | Run database migrations |
-| `bun run db:studio` | Open Prisma Studio |
-| `bun run db:push` | Push schema changes (dev) |
-
-## Project Structure
-
-```
-placement-next/
-├── app/                    # Next.js App Router pages
-│   ├── (auth)/            # Authentication pages
-│   ├── admin/             # Admin dashboard
-│   ├── api/               # API routes
-│   ├── applications/      # Student applications
-│   ├── dashboard/         # Student dashboard
-│   ├── jobs/              # Job listings
-│   ├── notifications/     # Notifications page
-│   ├── profile/           # Profile management
-│   └── settings/          # User settings
-├── components/            # React components
-│   ├── admin/             # Admin-specific components
-│   ├── ui/                # shadcn/ui components
-│   └── ...                # Feature components
-├── docs/                  # Documentation
-├── hooks/                 # Custom React hooks
-├── lib/                   # Utility functions
-├── prisma/                # Database schema & migrations
-├── providers/             # React context providers
-├── public/                # Static assets
-└── types/                 # TypeScript type definitions
-```
+---
 
 ## Troubleshooting
 
 ### Database Connection Issues
 
-1. Ensure your `DATABASE_URL` is correct
-2. For Neon, add `?sslmode=require` to the connection string
-3. If using connection pooling, use the pooler URL for `DATABASE_URL`
+1. Confirm `DATABASE_URL` is the pooler URL (for queries)
+2. Confirm `DIRECT_URL` is the direct URL (for migrations)
+3. Add `?sslmode=require` for Neon connections
+4. Run `pnpm db:generate` after any schema changes
 
 ### Push Notifications Not Working
 
-1. Verify VAPID keys are set correctly
-2. Check browser supports Service Workers
-3. Ensure HTTPS is enabled (required for push notifications)
+1. Verify VAPID keys match what was generated
+2. HTTPS is required — localhost works only with browser exemptions
+3. Check `public/sw.js` is accessible at the root of the deployed site
 
 ### Build Errors
 
 ```bash
-# Clear cache and rebuild
-bun run clean
-bun install
-bun run build
+# Clear caches and rebuild
+pnpm clean
+pnpm install
+pnpm build
 ```
+
+### Auth Errors
+
+- Ensure `NEXTAUTH_URL` matches the actual URL (including port in dev)
+- Ensure `NEXTAUTH_SECRET` is set in all environments
+- Verify Google OAuth redirect URI matches `NEXTAUTH_URL/api/auth/callback/google`
+
+---
 
 ## Support
 
-For issues and feature requests, please open an issue on GitHub.
+For issues and feature requests, open an issue on GitHub.
