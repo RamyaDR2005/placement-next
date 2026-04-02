@@ -111,13 +111,14 @@ export async function POST(request: NextRequest) {
                         payload
                     )
                     successCount++
-                } catch (error: any) {
+                } catch (error: unknown) {
                     failedCount++
                     // If subscription is no longer valid, remove it
-                    if (error.statusCode === 404 || error.statusCode === 410) {
+                    const pushError = error as { statusCode?: number }
+                    if (pushError.statusCode === 404 || pushError.statusCode === 410) {
                         failedEndpoints.push(sub.endpoint)
                     }
-                    console.error(`Failed to send to ${sub.endpoint}:`, error.message)
+                    console.error(`Failed to send to ${sub.endpoint}:`, error instanceof Error ? error.message : error)
                 }
             })
         )

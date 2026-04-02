@@ -2,14 +2,14 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { JobForm } from "@/components/admin/job-form"
+import { JobForm, type JobFormData } from "@/components/admin/job-form"
 import { toast } from "sonner"
 
 export default function NewJobPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
-    const handleSubmit = async (data: any) => {
+    const handleSubmit = async (data: JobFormData) => {
         setIsLoading(true)
         try {
             const response = await fetch('/api/admin/jobs', {

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin, sanitizeInput, logSecurityEvent } from "@/lib/auth-helpers"
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build the user filter based on targeting options
-    let userFilter: any = { role: 'STUDENT' }
+    let userFilter: Prisma.UserWhereInput = { role: 'STUDENT' }
 
     if (targetGroup === 'verified' || (targetGroup === 'all' && verifiedOnly)) {
       userFilter.profile = {

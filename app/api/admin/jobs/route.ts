@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { JobStatus, JobCategory, PlacementTier, Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin, sanitizeInput, logSecurityEvent } from "@/lib/auth-helpers"
 import { determineTier } from "@/lib/placement-rules"
@@ -60,15 +61,15 @@ export async function GET(request: NextRequest) {
         const limit = isNaN(rawLimit) ? 10 : Math.min(Math.max(rawLimit, 1), 100)
         const skip = (page - 1) * limit
 
-        const where: any = {}
+        const where: Prisma.JobWhereInput = {}
         if (status && status !== "ALL") {
-            where.status = status
+            where.status = status as JobStatus
         }
         if (category && category !== "ALL") {
-            where.category = category
+            where.category = category as JobCategory
         }
         if (tier && tier !== "ALL") {
-            where.tier = tier
+            where.tier = tier as PlacementTier
         }
 
         const [jobs, total] = await Promise.all([
@@ -251,7 +252,7 @@ export async function PUT(request: NextRequest) {
         }
 
         // Sanitize and prepare update data
-        const sanitizedData: any = {}
+        const sanitizedData: Prisma.JobUncheckedUpdateInput = {}
 
         if (updateData.title) sanitizedData.title = sanitizeInput(updateData.title)
         if (updateData.companyId !== undefined) sanitizedData.companyId = updateData.companyId

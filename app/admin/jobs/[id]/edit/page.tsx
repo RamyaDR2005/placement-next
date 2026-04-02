@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { JobForm } from "@/components/admin/job-form"
+import { JobForm, type JobFormData } from "@/components/admin/job-form"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -42,7 +42,7 @@ export default function EditJobPage() {
         fetchJob()
     }, [params.id, router])
 
-    const handleSubmit = async (data: any) => {
+    const handleSubmit = async (data: JobFormData) => {
         setIsLoading(true)
         try {
             const response = await fetch('/api/admin/jobs', {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -28,7 +28,7 @@ interface ApplicantActionsProps {
     currentStatus: string
 }
 
-const statusTransitions: Record<string, { label: string; icon: any; newStatus: string }[]> = {
+const statusTransitions: Record<string, { label: string; icon: React.ElementType; newStatus: string }[]> = {
     APPLIED: [
         { label: "Shortlist", icon: UserCheck, newStatus: "SHORTLISTED" },
         { label: "Reject", icon: XCircle, newStatus: "REJECTED" },

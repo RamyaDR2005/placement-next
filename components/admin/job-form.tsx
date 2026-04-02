@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { X } from "lucide-react"
 
-interface JobFormData {
+export interface JobFormData {
     id?: string
     title: string
     companyName: string

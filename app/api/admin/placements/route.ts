@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { EngineeringBranch, PlacementTier, Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin, logSecurityEvent } from "@/lib/auth-helpers"
 import { determineTier } from "@/lib/placement-rules"
@@ -22,10 +23,10 @@ export async function GET(request: NextRequest) {
         const limit = isNaN(rawLimit) ? 20 : Math.min(Math.max(rawLimit, 1), 100)
         const skip = (page - 1) * limit
 
-        const where: any = {}
+        const where: Prisma.PlacementWhereInput = {}
 
         if (tier && tier !== "ALL") {
-            where.tier = tier
+            where.tier = tier as PlacementTier
         }
 
         if (search) {
@@ -40,8 +41,10 @@ export async function GET(request: NextRequest) {
         if (batch || branch) {
             where.user = {
                 profile: {
-                    ...(batch && { batch }),
-                    ...(branch && { branch })
+                    is: {
+                        ...(batch && { batch }),
+                        ...(branch && { branch: branch as EngineeringBranch })
+                    }
                 }
             }
         }
@@ -82,13 +85,16 @@ export async function GET(request: NextRequest) {
         })
 
         return NextResponse.json({
-            placements,
-            stats,
-            pagination: {
-                total,
-                page,
-                limit,
-                pages: Math.ceil(total / limit)
+            success: true,
+            data: {
+                placements,
+                stats,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    pages: Math.ceil(total / limit)
+                }
             }
         })
 

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin, logSecurityEvent } from "@/lib/auth-helpers"
 import * as XLSX from "xlsx"
@@ -79,7 +80,7 @@ export async function POST(
         }
 
         // Build query
-        const where: any = {
+        const where: Prisma.ApplicationWhereInput = {
             jobId,
             isRemoved: false
         }
@@ -122,7 +123,7 @@ export async function POST(
 
         // Format data for export
         const exportData = applications.map((app: ApplicationWithUser, index: number) => {
-            const row: any = { "S.No": index + 1 }
+            const row: Record<string, string | number | null> = { "S.No": index + 1 }
 
             validFields.forEach((field: string) => {
                 const header = EXPORTABLE_FIELDS[field as keyof typeof EXPORTABLE_FIELDS]

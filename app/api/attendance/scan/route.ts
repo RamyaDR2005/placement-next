@@ -22,11 +22,11 @@ export async function POST(request: NextRequest) {
 
         // Try to parse QR data (could be JSON or just application ID)
         let applicationId: string
-        let parsedData: any = null
+        let parsedData: { applicationId?: string } | null = null
 
         try {
-            parsedData = JSON.parse(qrData)
-            applicationId = parsedData.applicationId
+            parsedData = JSON.parse(qrData) as { applicationId?: string }
+            applicationId = parsedData.applicationId ?? qrData
         } catch {
             // If not JSON, assume it's just the application ID
             applicationId = qrData

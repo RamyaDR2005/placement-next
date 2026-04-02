@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
-import { NotificationType } from "@prisma/client"
+import { NotificationType, Prisma } from "@prisma/client"
 
 // POST /api/admin/notifications - Send bulk notifications
 export async function POST(req: Request) {
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         }
 
         // Build user filter based on target type
-        let userFilter: any = { role: 'STUDENT' }
+        let userFilter: Prisma.UserWhereInput = { role: 'STUDENT' }
 
         switch (targetType) {
             case "verified":

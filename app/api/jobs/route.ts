@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { JobCategory, PlacementTier, WorkMode, Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { getSiteSettings } from "@/lib/settings"
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
         const skip = (page - 1) * limit
 
         // Build where clause
-        const where: any = {
+        const where: Prisma.JobWhereInput = {
             status: "ACTIVE",
             isVisible: true,
         }
@@ -77,15 +78,15 @@ export async function GET(request: NextRequest) {
         }
 
         if (category && category !== "ALL") {
-            where.category = category
+            where.category = category as JobCategory
         }
 
         if (workMode && workMode !== "ALL") {
-            where.workMode = workMode
+            where.workMode = workMode as WorkMode
         }
 
         if (tier && tier !== "ALL") {
-            where.tier = tier
+            where.tier = tier as PlacementTier
         }
 
         // Get user's profile and placement status

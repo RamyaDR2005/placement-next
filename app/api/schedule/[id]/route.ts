@@ -35,7 +35,7 @@ export async function PUT(
       eventDateTime = new Date(`${date}T${time}:00`)
     }
 
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
     if (title) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (eventDateTime) updateData.date = eventDateTime
