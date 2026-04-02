@@ -154,7 +154,7 @@ If this is a fresh database, this creates all tables. If upgrading, it applies o
 pnpm build
 ```
 
-This runs `prisma generate && next build` and produces a `.next/standalone` directory.
+This runs `prisma generate && next build` and produces the `.next` build output.
 
 ---
 
@@ -169,13 +169,15 @@ module.exports = {
     {
       name: "campusconnect",
       cwd: "/var/www/campusconnect",
-      script: ".next/standalone/server.js",
-      instances: 1,           // increase to "max" if you have many CPUs
-      exec_mode: "fork",      // use "cluster" if instances > 1
+      script: "node_modules/.bin/next",
+      args: "start -p 3000",
+      interpreter: "none",     // IMPORTANT: "next" binary is a shell script, not JS
+      instances: 1,
+      exec_mode: "fork",
       env: {
         NODE_ENV: "production",
         PORT: 3000,
-        HOSTNAME: "127.0.0.1",
+        HOSTNAME: "0.0.0.0",
       },
       // Load .env file
       env_file: "/var/www/campusconnect/.env",
@@ -194,14 +196,12 @@ module.exports = {
 EOF
 ```
 
+> **Why `interpreter: "none"`?** The `node_modules/.bin/next` file is a bash shell script, not JavaScript. By default PM2 runs scripts with Node.js, which causes `SyntaxError: missing ) after argument list`. Setting `interpreter: "none"` tells PM2 to execute it as a regular shell script.
+
 ```bash
 # Create log directory
 sudo mkdir -p /var/log/campusconnect
 sudo chown campusconnect:campusconnect /var/log/campusconnect
-
-# Copy static assets into standalone (required for Next.js standalone mode)
-cp -r .next/static .next/standalone/.next/static
-cp -r public .next/standalone/public
 
 # Start the app
 pm2 start ecosystem.config.js
@@ -347,7 +347,82 @@ Open `https://tpo.sdmcet.ac.in` in a browser. Log in, create a test account, ver
 
 ---
 
-## Updating the Application
+## CI/CD — Automated Deployment
+
+The project includes a GitHub Actions pipeline (`.github/workflows/deploy.yml`) that **automatically deploys on every push to `main`**. The pipeline:
+
+1. **Build & Type Check** — installs deps, generates Prisma client, runs `tsc --noEmit`, builds the app
+2. **Deploy** — SSH into the server, pulls code, installs deps, runs migrations, rebuilds, and reloads PM2
+3. **Health Check** — hits `https://tpo.sdmcet.ac.in` to verify the site is live
+
+### One-Time Setup: GitHub Secrets
+
+Go to **GitHub → Repository → Settings → Secrets and variables → Actions** and add these secrets:
+
+| Secret | Value |
+|--------|-------|
+| `SERVER_HOST` | Your server's public IP address |
+| `SERVER_USER` | SSH username (e.g., `root` or `campusconnect`) |
+| `SERVER_SSH_KEY` | The **private** key (full contents of `~/.ssh/id_ed25519`) |
+| `SERVER_PORT` | SSH port (default `22`, only needed if different) |
+
+### One-Time Setup: SSH Key on Server
+
+Generate a deploy key and authorize it on the server:
+
+```bash
+# On your LOCAL machine (or anywhere secure)
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/deploy_key -N ""
+
+# Copy the PUBLIC key to the server
+ssh-copy-id -i ~/.ssh/deploy_key.pub root@<server-ip>
+
+# Test that passwordless login works
+ssh -i ~/.ssh/deploy_key root@<server-ip> "echo 'SSH OK'"
+```
+
+Then paste the contents of `~/.ssh/deploy_key` (the **private** key) into the `SERVER_SSH_KEY` GitHub secret.
+
+### One-Time Setup: Server Prep
+
+Make sure the server can pull from GitHub without prompting for credentials:
+
+```bash
+# On the server — test git pull works
+cd /var/www/campusconnect
+git pull origin main
+# If this prompts for credentials, set up a GitHub deploy key or PAT:
+# https://docs.github.com/en/authentication/connecting-to-github-with-ssh/managing-deploy-keys
+```
+
+### How It Works
+
+```
+Push to main → GitHub Actions triggers
+  ├─ Job 1: Build & Type Check (Ubuntu runner)
+  │   ├─ pnpm install
+  │   ├─ prisma generate
+  │   ├─ tsc --noEmit
+  │   └─ next build
+  │
+  └─ Job 2: Deploy (SSH to server) — only if Job 1 passes
+      ├─ git pull origin main
+      ├─ pnpm install --frozen-lockfile
+      ├─ pnpm db:migrate:prod
+      ├─ pnpm build
+      ├─ pm2 reload campusconnect
+      └─ Health check → https://tpo.sdmcet.ac.in
+```
+
+### Manual Trigger
+
+You can also trigger a deploy manually from **GitHub → Actions → Deploy to Production → Run workflow**.
+
+---
+
+## Updating Manually (Fallback)
+
+If the CI/CD pipeline isn't configured or you need to deploy manually:
 
 ```bash
 cd /var/www/campusconnect
@@ -364,10 +439,6 @@ pnpm db:migrate:prod
 # Rebuild
 pnpm build
 
-# Copy new static assets
-cp -r .next/static .next/standalone/.next/static
-cp -r public .next/standalone/public
-
 # Zero-downtime reload
 pm2 reload campusconnect
 ```
@@ -383,8 +454,6 @@ git log --oneline -10
 # Roll back to it
 git checkout <commit-hash>
 pnpm build
-cp -r .next/static .next/standalone/.next/static
-cp -r public .next/standalone/public
 pm2 reload campusconnect
 ```
 

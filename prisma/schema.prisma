@@ -660,6 +660,7 @@ model Attendance {
   studentId String    @map("student_id")
   jobId     String?   @map("job_id")
   eventId   String?   @map("event_id")
+  round     String?   @map("round") // e.g. "Round 1 - Aptitude", "Round 2 - Technical"
   qrCode    String    @unique @map("qr_code") // Unique QR code for this attendance record
   scannedAt DateTime? @map("scanned_at") // When the QR was scanned
   scannedBy String?   @map("scanned_by") // Admin who scanned the QR
@@ -671,6 +672,7 @@ model Attendance {
   @@index([jobId])
   @@index([eventId])
   @@index([qrCode])
+  @@index([jobId, round])
   @@map("attendances")
 }
 

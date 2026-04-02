@@ -14,6 +14,7 @@ interface ProfilePhotoUploadProps {
   error?: string
   initialFile?: File | null
   description?: string
+  currentPhotoUrl?: string | null
 }
 
 export function ProfilePhotoUpload({
@@ -23,7 +24,8 @@ export function ProfilePhotoUpload({
   required = false,
   error,
   initialFile,
-  description
+  description,
+  currentPhotoUrl,
 }: ProfilePhotoUploadProps) {
   const maxSize = maxSizeMB * 1024 * 1024
 
@@ -47,8 +49,10 @@ export function ProfilePhotoUpload({
     }
   })
 
-  const previewUrl = files[0]?.preview || null
+  // New file takes priority; fall back to the existing saved URL
+  const previewUrl = files[0]?.preview || currentPhotoUrl || null
   const fileName = files[0]?.file.name || null
+  const isExistingPhoto = !files[0] && !!currentPhotoUrl
 
   return (
     <div className="space-y-2">
@@ -113,7 +117,7 @@ export function ProfilePhotoUpload({
               type="button"
               className="focus-visible:border-ring focus-visible:ring-ring/50 z-50 flex size-8 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white transition-[color,box-shadow] outline-none hover:bg-black/80 focus-visible:ring-[3px]"
               onClick={() => {
-                removeFile(files[0]?.id)
+                if (!isExistingPhoto) removeFile(files[0]?.id)
                 onFileChange?.(null)
               }}
               aria-label="Remove photo"
@@ -128,6 +132,12 @@ export function ProfilePhotoUpload({
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
           <UploadIcon className="h-4 w-4" />
           Photo selected: {fileName}
+        </div>
+      )}
+      {isExistingPhoto && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+          <UploadIcon className="h-4 w-4" />
+          Saved photo — click × to replace
         </div>
       )}
 

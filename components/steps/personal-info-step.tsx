@@ -76,6 +76,7 @@ export function PersonalInfoStep({ onNext, initialData = {} }: PersonalInfoStepP
       }
 
       const result = await response.json()
+      if (!result.url) throw new Error('Upload response missing URL')
       setFormData((prev) => ({
         ...prev,
         profilePhoto: result.url
@@ -229,6 +230,7 @@ export function PersonalInfoStep({ onNext, initialData = {} }: PersonalInfoStepP
               maxSizeMB={5}
               required={true}
               error={errors.profilePhoto}
+              currentPhotoUrl={typeof formData.profilePhoto === 'string' ? formData.profilePhoto : null}
               description={"• Passport-size photo (3.5cm x 4.5cm preferred)\n• Clear, recent photograph with plain background\n• Face should be clearly visible\n• File formats: JPG, PNG • Maximum file size: 5MB"}
             />
           </div>
