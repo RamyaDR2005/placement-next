@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { redirect } from "next/navigation"
 
 // KYC queue consolidated at /admin/students/kyc

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { PlacementManagementView } from "@/components/admin/placement-management-view"
 
 export default function PlacementsPage() {
