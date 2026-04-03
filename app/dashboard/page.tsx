@@ -5,20 +5,8 @@ import { checkYearAccess } from "@/lib/year-gate"
 import { getSiteSettings } from "@/lib/settings"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import {
-  IconBriefcase,
-  IconCalendar,
-  IconFileText,
-  IconBuilding,
-  IconAlertCircle,
-  IconUsers,
-  IconCircleCheck,
-  IconArrowRight,
-  IconTarget,
-  IconChartBar,
-  IconDownload
-} from "@tabler/icons-react"
 import Link from "next/link"
 import { format } from "date-fns"
 
@@ -58,6 +46,7 @@ export default async function DashboardPage() {
     verifiedProfiles,
     recentJobs,
     upcomingEventsList,
+    placementJourney,
   ] = await Promise.all([
     prisma.job.count().catch(() => 0),
     prisma.job.count({
@@ -106,6 +95,35 @@ export default async function DashboardPage() {
         type: true,
       }
     }).catch(() => []),
+    // Placement journey — only for students
+    isAdmin ? Promise.resolve([]) : prisma.application.findMany({
+      where: { userId: session.user.id, isRemoved: false },
+      orderBy: { appliedAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        jobId: true,
+        job: { select: { title: true, companyName: true, salary: true } },
+      },
+    }).then(async (apps) => {
+      if (!apps.length) return []
+      const jobIds = apps.map((a) => a.jobId)
+      const attendanceRecords = await prisma.attendance.findMany({
+        where: { studentId: session.user.id, jobId: { in: jobIds } },
+        select: { jobId: true, round: true, scannedAt: true },
+        orderBy: { createdAt: 'asc' },
+      })
+      const attendanceByJob = attendanceRecords.reduce<Record<string, typeof attendanceRecords>>((acc, r) => {
+        if (!r.jobId) return acc
+        if (!acc[r.jobId]) acc[r.jobId] = []
+        acc[r.jobId].push(r)
+        return acc
+      }, {})
+      return apps.map((app) => ({
+        ...app,
+        attendance: attendanceByJob[app.jobId] ?? [],
+      }))
+    }).catch(() => []),
   ])
 
   // Calculate profile completion
@@ -120,10 +138,10 @@ export default async function DashboardPage() {
         <div className="rounded-lg border border-neutral-200 bg-white p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold mb-2">
-                Welcome back, {session.user.name?.split(' ')[0]}! 👋
+              <h1 className="text-xl font-semibold tracking-tight">
+                Welcome back, {session.user.name?.split(' ')[0]}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm text-neutral-500 mt-0.5">
                 {isAdmin
                   ? "Manage placements and track student progress"
                   : "Track your placement journey and explore new opportunities"}
@@ -133,33 +151,21 @@ export default async function DashboardPage() {
               {!isAdmin && (
                 <>
                   <Link href="/profile">
-                    <Button size="sm" variant="outline" className="gap-2">
-                      <IconFileText size={16} />
-                      Update Profile
-                    </Button>
+                    <Button size="sm" variant="outline">Update Profile</Button>
                   </Link>
                   {isKycVerified && (
                     <Link href="/documents">
-                      <Button size="sm" variant="outline" className="gap-2">
-                        <IconDownload size={16} />
-                        Download ID Card
-                      </Button>
+                      <Button size="sm" variant="outline">Download ID Card</Button>
                     </Link>
                   )}
                   <Link href="/jobs">
-                    <Button size="sm" className="gap-2">
-                      <IconBuilding size={16} />
-                      Browse Jobs
-                    </Button>
+                    <Button size="sm">Browse Jobs</Button>
                   </Link>
                 </>
               )}
               {isAdmin && (
                 <Link href="/admin">
-                  <Button size="sm" className="gap-2">
-                    <IconChartBar size={16} />
-                    Admin Dashboard
-                  </Button>
+                  <Button size="sm">Admin Dashboard</Button>
                 </Link>
               )}
             </div>
@@ -168,15 +174,15 @@ export default async function DashboardPage() {
 
         {/* Announcement Banner */}
         {siteSettings.announcementActive && siteSettings.announcementText && (
-          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+          <Card className="border-blue-200 bg-blue-50">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <IconAlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                
                 <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900 dark:text-blue-200">
+                  <h3 className="font-semibold text-blue-900">
                     {siteSettings.placementSeasonName}
                   </h3>
-                  <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+                  <p className="text-sm text-blue-800 mt-1">
                     {siteSettings.announcementText}
                   </p>
                 </div>
@@ -187,15 +193,15 @@ export default async function DashboardPage() {
 
         {/* KYC Status Alert for students */}
         {!isAdmin && !hasProfile && (
-          <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+          <Card className="border-red-200 bg-red-50">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <IconAlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                
                 <div className="flex-1">
-                  <h3 className="font-semibold text-red-900 dark:text-red-200">
+                  <h3 className="font-semibold text-red-900">
                     Profile Setup Required
                   </h3>
-                  <p className="text-sm text-red-800 dark:text-red-300 mt-1">
+                  <p className="text-sm text-red-800 mt-1">
                     Please complete your profile to access placement opportunities.
                   </p>
                 </div>
@@ -210,15 +216,15 @@ export default async function DashboardPage() {
         )}
 
         {!isAdmin && hasProfile && user.profile?.kycStatus === 'PENDING' && (
-          <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+          <Card className="border-yellow-200 bg-yellow-50">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <IconAlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                
                 <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-200">
+                  <h3 className="font-semibold text-yellow-900">
                     KYC Verification Pending
                   </h3>
-                  <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
+                  <p className="text-sm text-yellow-800 mt-1">
                     Your account is under review. Please upload your College ID card for verification.
                   </p>
                 </div>
@@ -233,15 +239,15 @@ export default async function DashboardPage() {
         )}
 
         {!isAdmin && hasProfile && user.profile?.kycStatus === 'UNDER_REVIEW' && (
-          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+          <Card className="border-blue-200 bg-blue-50">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <IconAlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                
                 <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900 dark:text-blue-200">
+                  <h3 className="font-semibold text-blue-900">
                     KYC Verification In Progress
                   </h3>
-                  <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+                  <p className="text-sm text-blue-800 mt-1">
                     Your documents are being verified by the admin. You'll be notified once approved.
                   </p>
                 </div>
@@ -251,15 +257,15 @@ export default async function DashboardPage() {
         )}
 
         {!isAdmin && profileCompletionScore < 100 && isKycVerified && (
-          <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+          <Card className="border-yellow-200 bg-yellow-50">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <IconAlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                
                 <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-200">
+                  <h3 className="font-semibold text-yellow-900">
                     Complete Your Profile
                   </h3>
-                  <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
+                  <p className="text-sm text-yellow-800 mt-1">
                     Your profile is {profileCompletionScore}% complete. Complete it to apply for jobs.
                   </p>
                   <Progress value={profileCompletionScore} className="mt-3 h-2" />
@@ -379,6 +385,86 @@ export default async function DashboardPage() {
           </div>
         )}
 
+        {/* Placement Journey — students only */}
+        {!isAdmin && placementJourney.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Placement Journey</CardTitle>
+                  <CardDescription>Your progress at each company — rounds attended and current status</CardDescription>
+                </div>
+                <Link href="/attendance">
+                  <Button variant="ghost" size="sm">My QR Codes</Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {placementJourney.map((app: any) => {
+                  const attended = app.attendance.filter((a: any) => a.scannedAt)
+                  const pending = app.attendance.filter((a: any) => !a.scannedAt)
+                  const isRejected = app.status === 'REJECTED' || app.status === 'OFFER_REJECTED'
+                  const isPlaced = app.status === 'SELECTED' || app.status === 'OFFER_ACCEPTED'
+                  const statusColor = isPlaced
+                    ? 'bg-green-100 text-green-800 border-green-200'
+                    : isRejected
+                    ? 'bg-red-100 text-red-800 border-red-200'
+                    : 'bg-blue-100 text-blue-800 border-blue-200'
+                  const statusLabel: Record<string, string> = {
+                    APPLIED: 'Applied',
+                    SHORTLISTED: 'Shortlisted',
+                    INTERVIEW_SCHEDULED: 'Interview Scheduled',
+                    INTERVIEWED: 'Interviewed',
+                    SELECTED: 'Selected ✓',
+                    OFFER_ACCEPTED: 'Offer Accepted ✓',
+                    OFFER_REJECTED: 'Offer Rejected',
+                    REJECTED: 'Not Selected',
+                  }
+                  return (
+                    <div key={app.id} className="rounded-lg border p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{app.job.companyName}</p>
+                          <p className="text-xs text-muted-foreground">{app.job.title} · {app.job.salary} LPA</p>
+                        </div>
+                        <Badge className={`${statusColor} border text-xs shrink-0`}>
+                          {statusLabel[app.status] ?? app.status}
+                        </Badge>
+                      </div>
+                      {app.attendance.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Rounds</p>
+                          <div className="flex flex-wrap gap-2">
+                            {app.attendance.map((a: any, i: number) => (
+                              <span
+                                key={i}
+                                className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${
+                                  a.scannedAt
+                                    ? 'bg-green-50 border-green-200 text-green-700'
+                                    : 'bg-neutral-50 border-neutral-200 text-neutral-500'
+                                }`}
+                              >
+                                {a.scannedAt ? '✓' : '○'} {a.round ?? 'Round'}
+                              </span>
+                            ))}
+                          </div>
+                          {isRejected && attended.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              Attended {attended.length} round{attended.length > 1 ? 's' : ''} — not selected after{' '}
+                              <span className="font-medium">{attended[attended.length - 1]?.round ?? 'final round'}</span>
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Quick Actions */}
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
@@ -389,17 +475,13 @@ export default async function DashboardPage() {
                   <CardDescription>Latest opportunities posted</CardDescription>
                 </div>
                 <Link href="/jobs">
-                  <Button variant="ghost" size="sm">
-                    View All
-                    <IconArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                  <Button variant="ghost" size="sm">View All</Button>
                 </Link>
               </div>
             </CardHeader>
             <CardContent>
               {recentJobs.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <IconBriefcase className="h-12 w-12 mx-auto mb-3 opacity-20" />
                   <p>No active jobs at the moment</p>
                   <p className="text-xs mt-1">Check back later for new opportunities</p>
                 </div>
@@ -430,16 +512,14 @@ export default async function DashboardPage() {
                   <CardTitle>Upcoming Events</CardTitle>
                   <CardDescription>Scheduled interviews and sessions</CardDescription>
                 </div>
-                <Button variant="ghost" size="sm">
-                  View All
-                  <IconArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link href="/schedule">
+                  <Button variant="ghost" size="sm">View All</Button>
+                </Link>
               </div>
             </CardHeader>
             <CardContent>
               {upcomingEventsList.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <IconCalendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
                   <p>No upcoming events</p>
                   <p className="text-xs mt-1">Events will appear here when scheduled</p>
                 </div>

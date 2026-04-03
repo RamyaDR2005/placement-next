@@ -1,134 +1,72 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { requireAuth } from "@/lib/auth-helpers"
 
-// POST - Subscribe to push notifications
+// GET - Check whether the current user has an active push subscription
+export async function GET() {
+    const { error, session } = await requireAuth()
+    if (error || !session) return error
+
+    const subscription = await prisma.pushSubscription.findFirst({
+        where: { userId: session.user.id },
+        select: { id: true, endpoint: true, createdAt: true },
+    })
+
+    return NextResponse.json({
+        isSubscribed: !!subscription,
+        subscription: subscription
+            ? { endpoint: subscription.endpoint, subscribedAt: subscription.createdAt }
+            : null,
+    })
+}
+
+// POST - Save a new push subscription (idempotent upsert on endpoint)
 export async function POST(request: NextRequest) {
-    try {
-        const session = await auth()
+    const { error, session } = await requireAuth()
+    if (error || !session) return error
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            )
-        }
-
-        const { subscription } = await request.json()
-
-        if (!subscription || !subscription.endpoint) {
-            return NextResponse.json(
-                { error: "Invalid subscription" },
-                { status: 400 }
-            )
-        }
-
-        // Check if subscription already exists
-        const existingSubscription = await prisma.pushSubscription.findFirst({
-            where: {
-                userId: session.user.id,
-                endpoint: subscription.endpoint
-            }
-        })
-
-        if (existingSubscription) {
-            // Update existing subscription
-            await prisma.pushSubscription.update({
-                where: { id: existingSubscription.id },
-                data: {
-                    p256dh: subscription.keys.p256dh,
-                    auth: subscription.keys.auth
-                }
-            })
-        } else {
-            // Create new subscription
-            await prisma.pushSubscription.create({
-                data: {
-                    userId: session.user.id,
-                    endpoint: subscription.endpoint,
-                    p256dh: subscription.keys.p256dh,
-                    auth: subscription.keys.auth
-                }
-            })
-        }
-
-        return NextResponse.json({ success: true })
-    } catch (error) {
-        console.error("Error subscribing to push:", error)
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        )
+    const body = await request.json().catch(() => null)
+    const subscription = body?.subscription ?? body
+    if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
+        return NextResponse.json({ error: "Invalid subscription payload" }, { status: 400 })
     }
+
+    const userAgent = request.headers.get("user-agent") ?? undefined
+
+    await prisma.pushSubscription.upsert({
+        where: { endpoint: subscription.endpoint },
+        create: {
+            userId: session.user.id,
+            endpoint: subscription.endpoint,
+            p256dh: subscription.keys.p256dh,
+            auth: subscription.keys.auth,
+            userAgent,
+        },
+        update: {
+            userId: session.user.id,
+            p256dh: subscription.keys.p256dh,
+            auth: subscription.keys.auth,
+            userAgent,
+        },
+    })
+
+    return NextResponse.json({ success: true })
 }
 
-// DELETE - Unsubscribe from push notifications
+// DELETE - Remove a push subscription by endpoint (or all if no endpoint given)
 export async function DELETE(request: NextRequest) {
-    try {
-        const session = await auth()
+    const { error, session } = await requireAuth()
+    if (error || !session) return error
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            )
-        }
+    const body = await request.json().catch(() => ({}))
+    const endpoint = typeof body?.endpoint === "string" ? body.endpoint : null
 
-        const { endpoint } = await request.json()
+    await prisma.pushSubscription.deleteMany({
+        where: {
+            userId: session.user.id,
+            ...(endpoint ? { endpoint } : {}),
+        },
+    })
 
-        if (!endpoint) {
-            return NextResponse.json(
-                { error: "Endpoint required" },
-                { status: 400 }
-            )
-        }
-
-        await prisma.pushSubscription.deleteMany({
-            where: {
-                userId: session.user.id,
-                endpoint: endpoint
-            }
-        })
-
-        return NextResponse.json({ success: true })
-    } catch (error) {
-        console.error("Error unsubscribing from push:", error)
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        )
-    }
-}
-
-// GET - Check subscription status
-export async function GET(request: NextRequest) {
-    try {
-        const session = await auth()
-
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            )
-        }
-
-        const subscriptions = await prisma.pushSubscription.findMany({
-            where: { userId: session.user.id },
-            select: { endpoint: true, createdAt: true }
-        })
-
-        return NextResponse.json({
-            isSubscribed: subscriptions.length > 0,
-            subscriptions: subscriptions.map((s: { endpoint: string; createdAt: Date }) => ({
-                endpoint: s.endpoint,
-                subscribedAt: s.createdAt
-            }))
-        })
-    } catch (error) {
-        console.error("Error checking push status:", error)
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        )
-    }
+    return NextResponse.json({ success: true })
 }

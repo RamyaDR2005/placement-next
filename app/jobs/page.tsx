@@ -12,16 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Search,
-  MapPin,
-  Building2,
-  Clock,
-  Briefcase,
-  Users,
-  AlertCircle,
-  ChevronRight
-} from "lucide-react"
+import { Search } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 
@@ -45,12 +36,35 @@ interface Job {
   deadline?: string
   noOfPositions?: number
   createdAt: string
-  _count: {
-    applications: number
-  }
+  _count: { applications: number }
   isEligible: boolean
   eligibilityIssues: string[]
   hasApplied: boolean
+}
+
+const JOB_TYPE_LABELS: Record<string, string> = {
+  FULL_TIME: "Full Time", PART_TIME: "Part Time",
+  INTERNSHIP: "Internship", CONTRACT: "Contract", FREELANCE: "Freelance",
+}
+const WORK_MODE_LABELS: Record<string, string> = {
+  OFFICE: "On-site", REMOTE: "Remote", HYBRID: "Hybrid", FLEXIBLE: "Flexible",
+}
+const CATEGORY_LABELS: Record<string, string> = {
+  TRAINING_INTERNSHIP: "Training + Internship", INTERNSHIP: "Internship", FTE: "Full Time",
+}
+
+function getTierLabel(tier: string, isDreamOffer: boolean) {
+  if (isDreamOffer) return "Dream"
+  return tier.replace("_", " ")
+}
+
+function CompanyInitial({ name, logo }: { name: string; logo?: string }) {
+  if (logo) return <img src={logo} alt={name} className="w-9 h-9 rounded-lg object-cover" />
+  return (
+    <div className="w-9 h-9 rounded-lg bg-neutral-100 flex items-center justify-center shrink-0">
+      <span className="text-sm font-semibold text-neutral-500">{name[0]?.toUpperCase()}</span>
+    </div>
+  )
 }
 
 export default function JobsPage() {
@@ -66,271 +80,157 @@ export default function JobsPage() {
   const fetchJobs = async () => {
     setIsLoading(true)
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "10",
-      })
-
+      const params = new URLSearchParams({ page: page.toString(), limit: "10" })
       if (search) params.append("search", search)
       if (jobType !== "ALL") params.append("jobType", jobType)
       if (workMode !== "ALL") params.append("workMode", workMode)
-
-      const response = await fetch(`/api/jobs?${params}`)
-      if (response.ok) {
-        const data = await response.json()
+      const res = await fetch(`/api/jobs?${params}`)
+      if (res.ok) {
+        const data = await res.json()
         setJobs(data.data.jobs)
         setTotalPages(data.data.pagination.pages)
         setRegistrationOpen(data.data.registrationOpen ?? true)
       }
-    } catch (error) {
-      console.error("Error fetching jobs:", error)
+    } catch {
+      // ignore
     } finally {
       setIsLoading(false)
     }
   }
 
-  useEffect(() => {
-    fetchJobs()
-  }, [page, jobType, workMode])
+  useEffect(() => { fetchJobs() }, [page, jobType, workMode])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setPage(1)
-    fetchJobs()
-  }
-
-  const getJobTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      FULL_TIME: "Full Time",
-      PART_TIME: "Part Time",
-      INTERNSHIP: "Internship",
-      CONTRACT: "Contract",
-      FREELANCE: "Freelance"
-    }
-    return labels[type] || type
-  }
-
-  const getWorkModeLabel = (mode: string) => {
-    const labels: Record<string, string> = {
-      OFFICE: "On-site",
-      REMOTE: "Remote",
-      HYBRID: "Hybrid",
-      FLEXIBLE: "Flexible"
-    }
-    return labels[mode] || mode
-  }
-
-  const getTierVariant = (tier: string, isDreamOffer: boolean): "default" | "secondary" | "outline" | "destructive" => {
-    if (isDreamOffer) return "destructive"
-    if (tier === "TIER_1") return "default"
-    if (tier === "TIER_2") return "secondary"
-    return "outline"
-  }
-
-  const getTierLabel = (tier: string, isDreamOffer: boolean) => {
-    if (isDreamOffer) return "Dream Offer"
-    return tier.replace("_", " ")
-  }
-
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      TRAINING_INTERNSHIP: "Training + Internship",
-      INTERNSHIP: "Internship",
-      FTE: "Full Time Employment"
-    }
-    return labels[category] || category
-  }
+  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setPage(1); fetchJobs() }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8 space-y-6">
+      {/* Page header */}
       <div>
-        <h1 className="text-3xl font-bold">Job Opportunities</h1>
-        <p className="text-muted-foreground mt-2">
-          Explore and apply to placement opportunities
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight">Job Opportunities</h1>
+        <p className="text-sm text-neutral-500 mt-0.5">Explore and apply to placement opportunities</p>
       </div>
 
-      {/* Registration Closed Banner */}
+      {/* Registration closed banner */}
       {!registrationOpen && (
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-              <div>
-                <p className="font-medium text-yellow-900">Applications are currently closed</p>
-                <p className="text-sm text-yellow-800">The placement cell has temporarily paused new applications. You can still browse available positions.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+          <p className="font-medium text-amber-900">Applications are currently closed</p>
+          <p className="text-amber-700 mt-0.5">The placement cell has temporarily paused new applications. You can still browse positions.</p>
+        </div>
       )}
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search jobs, companies, or locations..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={jobType} onValueChange={setJobType}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Job Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Types</SelectItem>
-                <SelectItem value="FULL_TIME">Full Time</SelectItem>
-                <SelectItem value="INTERNSHIP">Internship</SelectItem>
-                <SelectItem value="PART_TIME">Part Time</SelectItem>
-                <SelectItem value="CONTRACT">Contract</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={workMode} onValueChange={setWorkMode}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Work Mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Modes</SelectItem>
-                <SelectItem value="OFFICE">On-site</SelectItem>
-                <SelectItem value="REMOTE">Remote</SelectItem>
-                <SelectItem value="HYBRID">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button type="submit">Search</Button>
-          </form>
-        </CardContent>
-      </Card>
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
+          <Input
+            placeholder="Search jobs or companies…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={jobType} onValueChange={setJobType}>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Job Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Types</SelectItem>
+            <SelectItem value="FULL_TIME">Full Time</SelectItem>
+            <SelectItem value="INTERNSHIP">Internship</SelectItem>
+            <SelectItem value="PART_TIME">Part Time</SelectItem>
+            <SelectItem value="CONTRACT">Contract</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={workMode} onValueChange={setWorkMode}>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Work Mode" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Modes</SelectItem>
+            <SelectItem value="OFFICE">On-site</SelectItem>
+            <SelectItem value="REMOTE">Remote</SelectItem>
+            <SelectItem value="HYBRID">Hybrid</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button type="submit" variant="outline">Search</Button>
+      </form>
 
-      {/* Jobs List */}
+      {/* List */}
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-6 bg-muted rounded w-1/3 mb-4" />
-                <div className="h-4 bg-muted rounded w-1/2 mb-2" />
-                <div className="h-4 bg-muted rounded w-1/4" />
-              </CardContent>
-            </Card>
+            <div key={i} className="h-24 rounded-xl border border-neutral-200 bg-neutral-50 animate-pulse" />
           ))}
         </div>
       ) : jobs.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Briefcase className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No jobs found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search filters or check back later for new opportunities.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-neutral-200 py-16 text-center">
+          <p className="text-sm font-medium text-neutral-700">No jobs found</p>
+          <p className="text-sm text-neutral-400 mt-1">Try adjusting your filters or check back later.</p>
+        </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {jobs.map((job) => (
             <Card
               key={job.id}
-              className={`hover:shadow-md transition-shadow ${!job.isEligible ? 'opacity-75' : ''}`}
+              className={`border-neutral-200 hover:border-neutral-300 transition-colors ${!job.isEligible ? "opacity-60" : ""}`}
             >
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-4">
-                      {job.companyLogo ? (
-                        <img
-                          src={job.companyLogo}
-                          alt={job.companyName}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                          <Building2 className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <h3 className="text-lg font-semibold">{job.title}</h3>
-                          <Badge variant={getTierVariant(job.tier, job.isDreamOffer)}>
-                            {getTierLabel(job.tier, job.isDreamOffer)}
-                          </Badge>
-                          <Badge variant="outline">{getCategoryLabel(job.category)}</Badge>
-                          {job.hasApplied && (
-                            <Badge className="bg-green-100 text-green-800">Applied</Badge>
-                          )}
-                        </div>
-                        <p className="text-muted-foreground">{job.companyName}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3 mt-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {job.location}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Briefcase className="w-4 h-4" />
-                        {getJobTypeLabel(job.jobType)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-4 h-4" />
-                        {getWorkModeLabel(job.workMode)}
-                      </span>
-                      <span className="flex items-center gap-1 font-medium text-green-600">
-                        ₹{job.salary} LPA
-                      </span>
-                      {job.noOfPositions && (
-                        <span className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          {job.noOfPositions} positions
-                        </span>
-                      )}
-                      {job.deadline && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          Deadline: {format(new Date(job.deadline), 'MMM dd, yyyy')}
-                        </span>
-                      )}
-                    </div>
-
-                    {job.requiredSkills.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {job.requiredSkills.slice(0, 5).map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {job.requiredSkills.length > 5 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{job.requiredSkills.length - 5} more
-                          </Badge>
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <CompanyInitial name={job.companyName} logo={job.companyLogo} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm font-semibold text-neutral-900">{job.title}</h3>
+                        {job.isDreamOffer && (
+                          <Badge variant="destructive" className="text-xs px-1.5 py-0">Dream</Badge>
+                        )}
+                        {!job.isDreamOffer && job.tier === "TIER_1" && (
+                          <Badge className="text-xs px-1.5 py-0">Tier 1</Badge>
+                        )}
+                        {job.hasApplied && (
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0">Applied</Badge>
                         )}
                       </div>
-                    )}
-
-                    {!job.isEligible && job.eligibilityIssues.length > 0 && (
-                      <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
-                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
-                          <AlertCircle className="w-4 h-4" />
-                          <span>Not Eligible: {job.eligibilityIssues[0]}</span>
-                        </div>
+                      <p className="text-sm text-neutral-500 mt-0.5">{job.companyName}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-neutral-400">
+                        <span>{job.location}</span>
+                        <span>{JOB_TYPE_LABELS[job.jobType] ?? job.jobType}</span>
+                        <span>{WORK_MODE_LABELS[job.workMode] ?? job.workMode}</span>
+                        <span className="text-neutral-700 font-medium">₹{job.salary} LPA</span>
+                        {job.noOfPositions && <span>{job.noOfPositions} positions</span>}
+                        {job.deadline && <span>Due {format(new Date(job.deadline), "MMM d")}</span>}
                       </div>
-                    )}
+                      {job.requiredSkills.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2.5">
+                          {job.requiredSkills.slice(0, 5).map((skill) => (
+                            <span key={skill} className="inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                              {skill}
+                            </span>
+                          ))}
+                          {job.requiredSkills.length > 5 && (
+                            <span className="inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-400">
+                              +{job.requiredSkills.length - 5}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {!job.isEligible && job.eligibilityIssues.length > 0 && (
+                        <p className="mt-2 text-xs text-red-600">{job.eligibilityIssues[0]}</p>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-end gap-2 shrink-0">
                     <Link href={`/jobs/${job.id}`}>
-                      <Button variant={job.hasApplied ? "outline" : "default"} disabled={!job.isEligible && !job.hasApplied}>
-                        {job.hasApplied ? "View Application" : "View Details"}
-                        <ChevronRight className="w-4 h-4 ml-1" />
+                      <Button
+                        size="sm"
+                        variant={job.hasApplied ? "outline" : "default"}
+                        disabled={!job.isEligible && !job.hasApplied}
+                        className="text-xs"
+                      >
+                        {job.hasApplied ? "View" : "Details"}
                       </Button>
                     </Link>
-                    <p className="text-xs text-muted-foreground">
-                      {job._count.applications} applied
-                    </p>
+                    <span className="text-xs text-neutral-400">{job._count.applications} applied</span>
                   </div>
                 </div>
               </CardContent>
@@ -341,26 +241,16 @@ export default function JobsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <Button
-            variant="outline"
-            disabled={page === 1}
-            onClick={() => setPage(p => p - 1)}
-          >
+        <div className="flex items-center justify-center gap-2">
+          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </Button>
-          <span className="flex items-center px-4">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={page === totalPages}
-            onClick={() => setPage(p => p + 1)}
-          >
+          <span className="text-sm text-neutral-500">Page {page} of {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
             Next
           </Button>
         </div>
       )}
     </div>
   )
-} 
+}

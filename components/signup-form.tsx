@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { signupSchema, type SignupFormData } from "@/lib/validations/auth"
-import { IconCircleCheck, IconAlertCircle, IconEye, IconEyeOff } from "@tabler/icons-react"
+import { Eye, EyeOff } from "lucide-react"
 import { LoadingSpinner } from "@/components/ui/loading"
 import { Progress } from "@/components/ui/progress"
 
@@ -79,9 +79,7 @@ export function SignupForm({
         return
       }
 
-      toast.success("Account created! Check your email to verify.", {
-        icon: <IconCircleCheck className="h-5 w-5 text-green-500" />,
-      })
+      toast.success("Account created! Check your email to verify.")
       router.push("/verify-email")
     } catch {
       toast.error("Something went wrong. Please try again.")
@@ -151,10 +149,7 @@ export function SignupForm({
                   {...register("name")}
                 />
                 {errors.name && (
-                  <p className="text-xs text-red-500 flex items-center gap-1">
-                    <IconAlertCircle className="h-3 w-3" />
-                    {errors.name.message}
-                  </p>
+                  <p className="text-xs text-red-500">{errors.name.message}</p>
                 )}
               </div>
 
@@ -171,10 +166,7 @@ export function SignupForm({
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-xs text-red-500 flex items-center gap-1">
-                    <IconAlertCircle className="h-3 w-3" />
-                    {errors.email.message}
-                  </p>
+                  <p className="text-xs text-red-500">{errors.email.message}</p>
                 )}
               </div>
 
@@ -196,7 +188,7 @@ export function SignupForm({
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {showPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {password && (
@@ -208,10 +200,7 @@ export function SignupForm({
                   </div>
                 )}
                 {errors.password && (
-                  <p className="text-xs text-red-500 flex items-center gap-1">
-                    <IconAlertCircle className="h-3 w-3" />
-                    {errors.password.message}
-                  </p>
+                  <p className="text-xs text-red-500">{errors.password.message}</p>
                 )}
               </div>
 
@@ -233,14 +222,11 @@ export function SignupForm({
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {showConfirmPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-xs text-red-500 flex items-center gap-1">
-                    <IconAlertCircle className="h-3 w-3" />
-                    {errors.confirmPassword.message}
-                  </p>
+                  <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>
                 )}
               </div>
 

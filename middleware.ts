@@ -57,9 +57,16 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Get session token from cookies to check authentication without importing auth
-  const sessionToken = request.cookies.get("next-auth.session-token")?.value ||
-    request.cookies.get("__Secure-next-auth.session-token")?.value
+  // Get session token from cookies to check authentication without importing auth.
+  // Support both NextAuth v4/v5 cookie name conventions:
+  //   next-auth.*          — v4 / v5 early betas
+  //   authjs.*             — v5 beta.30+ new default
+  //   __Secure-*           — HTTPS variants of each
+  const sessionToken =
+    request.cookies.get("next-auth.session-token")?.value ||
+    request.cookies.get("__Secure-next-auth.session-token")?.value ||
+    request.cookies.get("authjs.session-token")?.value ||
+    request.cookies.get("__Secure-authjs.session-token")?.value
 
   // If user is not authenticated, redirect to login
   if (!sessionToken) {

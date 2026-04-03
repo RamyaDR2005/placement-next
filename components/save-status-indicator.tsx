@@ -1,6 +1,6 @@
 "use client"
 
-import { IconCircleCheck, IconCloud, IconCloudOff, IconLoader2, IconRefresh } from "@tabler/icons-react"
+import { CheckCircle2, Cloud, CloudOff, Loader2, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import type { SaveStatus } from "@/hooks/use-profile-form"
@@ -24,27 +24,27 @@ export function SaveStatusIndicator({
         switch (status) {
             case "saving":
                 return {
-                    icon: <IconLoader2 className="h-4 w-4 animate-spin" />,
+                    icon: <Loader2 className="h-4 w-4 animate-spin" />,
                     text: "Saving...",
-                    color: "text-blue-600 dark:text-blue-400"
+                    color: "text-blue-600"
                 }
             case "saved":
                 return {
-                    icon: <IconCircleCheck className="h-4 w-4" />,
+                    icon: <CheckCircle2 className="h-4 w-4" />,
                     text: lastSaved
                         ? `Saved ${getTimeAgo(lastSaved)}`
                         : "Saved",
-                    color: "text-green-600 dark:text-green-400"
+                    color: "text-green-600"
                 }
             case "error":
                 return {
-                    icon: <IconCloudOff className="h-4 w-4" />,
+                    icon: <CloudOff className="h-4 w-4" />,
                     text: "Failed to save",
-                    color: "text-red-600 dark:text-red-400"
+                    color: "text-red-600"
                 }
             default:
                 return {
-                    icon: <IconCloud className="h-4 w-4" />,
+                    icon: <Cloud className="h-4 w-4" />,
                     text: "Not saved",
                     color: "text-muted-foreground"
                 }
@@ -66,7 +66,7 @@ export function SaveStatusIndicator({
                     onClick={onRetry}
                     className="h-7 px-2 text-xs"
                 >
-                    <IconRefresh className="h-3 w-3 mr-1" />
+                    <RefreshCw className="h-3 w-3 mr-1" />
                     Retry
                 </Button>
             </div>

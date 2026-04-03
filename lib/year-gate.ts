@@ -37,18 +37,23 @@ export async function checkYearAccess(
     return { authorized: true }
   }
 
-  const settings = await getAdminSettings()
-  const authorized = isYearAuthorized(
-    usn,
-    settings.activeAdmissionYears,
-    settings.collegeCode
-  )
+  try {
+    const settings = await getAdminSettings()
+    const authorized = isYearAuthorized(
+      usn,
+      settings.activeAdmissionYears,
+      settings.collegeCode
+    )
 
-  if (!authorized) {
-    return {
-      authorized: false,
-      reason: `Your batch year is not currently active for placements. Active years: ${settings.activeAdmissionYears.join(", ")}`,
+    if (!authorized) {
+      return {
+        authorized: false,
+        reason: `Your batch year is not currently active for placements. Active years: ${settings.activeAdmissionYears.join(", ")}`,
+      }
     }
+  } catch {
+    // If admin settings can't be fetched, grant access rather than locking users out
+    return { authorized: true }
   }
 
   return { authorized: true }

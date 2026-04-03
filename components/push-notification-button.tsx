@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { IconBell, IconBellOff } from "@tabler/icons-react"
+import { Bell, BellOff } from "lucide-react"
 import { LoadingSpinner } from "@/components/ui/loading"
 import { toast } from "sonner"
 
@@ -27,13 +27,19 @@ export function PushNotificationButton() {
     const [isSupported, setIsSupported] = useState(false)
     const [isSubscribed, setIsSubscribed] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [isDenied, setIsDenied] = useState(false)
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
 
     useEffect(() => {
         // Check if push notifications are supported
         if ("serviceWorker" in navigator && "PushManager" in window) {
             setIsSupported(true)
-            registerServiceWorker()
+            if (Notification.permission === "denied") {
+                setIsDenied(true)
+                setIsLoading(false)
+            } else {
+                registerServiceWorker()
+            }
         } else {
             setIsLoading(false)
         }
@@ -130,6 +136,15 @@ export function PushNotificationButton() {
         return null
     }
 
+    if (isDenied) {
+        return (
+            <Button variant="ghost" size="sm" disabled title="Notifications blocked in browser settings. Go to Site Settings to allow them.">
+                <BellOff className="w-4 h-4 mr-2 text-muted-foreground" />
+                <span className="text-muted-foreground">Notifications Blocked</span>
+            </Button>
+        )
+    }
+
     return (
         <Button
             variant={isSubscribed ? "outline" : "default"}
@@ -140,11 +155,11 @@ export function PushNotificationButton() {
             {isLoading ? (
                 <LoadingSpinner size="sm" className="mr-2" />
             ) : isSubscribed ? (
-                <IconBellOff className="w-4 h-4 mr-2" />
+                <BellOff className="w-4 h-4 mr-2" />
             ) : (
-                <IconBell className="w-4 h-4 mr-2" />
+                <Bell className="w-4 h-4 mr-2" />
             )}
-            {isLoading ? "Loading..." : isSubscribed ? "Disable Notifications" : "Enable Notifications"}
+            {isLoading ? "Loading..." : isSubscribed ? "Notifications On" : "Enable Notifications"}
         </Button>
     )
 }
@@ -154,12 +169,18 @@ export function PushNotificationToggle() {
     const [isSupported, setIsSupported] = useState(false)
     const [isSubscribed, setIsSubscribed] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [isDenied, setIsDenied] = useState(false)
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
 
     useEffect(() => {
         if ("serviceWorker" in navigator && "PushManager" in window) {
             setIsSupported(true)
-            checkSubscription()
+            if (Notification.permission === "denied") {
+                setIsDenied(true)
+                setIsLoading(false)
+            } else {
+                checkSubscription()
+            }
         } else {
             setIsLoading(false)
         }
@@ -235,6 +256,23 @@ export function PushNotificationToggle() {
         return (
             <div className="text-sm text-muted-foreground">
                 Push notifications are not supported in your browser
+            </div>
+        )
+    }
+
+    if (isDenied) {
+        return (
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="font-medium">Push Notifications</p>
+                    <p className="text-sm text-muted-foreground">
+                        Blocked in browser settings — go to Site Settings to allow
+                    </p>
+                </div>
+                <Button variant="ghost" size="sm" disabled>
+                    <BellOff className="w-4 h-4 mr-1" />
+                    Blocked
+                </Button>
             </div>
         )
     }

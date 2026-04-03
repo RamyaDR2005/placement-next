@@ -11,9 +11,10 @@ const inter = Inter({
 });
 
 const manrope = Manrope({
-  variable: "--font-display",
+  variable: "--font-manrope",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${manrope.variable} font-sans antialiased min-h-screen bg-white selection:bg-primary/20`}
+        className={`${inter.variable} ${manrope.variable} font-sans antialiased min-h-screen bg-white selection:bg-neutral-200`}
       >
         <SessionProvider>
           <div className="relative flex min-h-screen flex-col">

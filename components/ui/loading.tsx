@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { IconLoader2 } from "@tabler/icons-react"
+import { Loader2 } from "lucide-react"
 
 interface LoadingSpinnerProps {
     size?: "sm" | "md" | "lg" | "xl"
@@ -19,7 +19,7 @@ const sizeClasses = {
 export function LoadingSpinner({ size = "md", className, text }: LoadingSpinnerProps) {
     return (
         <div className={cn("flex items-center justify-center gap-2", className)}>
-            <IconLoader2 className={cn("animate-spin text-primary", sizeClasses[size])} />
+            <Loader2 className={cn("animate-spin text-primary", sizeClasses[size])} />
             {text && <span className="text-sm text-muted-foreground">{text}</span>}
         </div>
     )
@@ -143,7 +143,7 @@ export function ButtonLoading({
     if (isLoading) {
         return (
             <span className={cn("inline-flex items-center gap-2", className)}>
-                <IconLoader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 {loadingText || <LoadingDots />}
             </span>
         )

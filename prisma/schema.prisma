@@ -67,6 +67,12 @@ model User {
   // Backup Relations
   backupLogs BackupLog[]
 
+  // Batch Relations
+  batchId        String?  @map("batch_id")
+  batch          Batch?   @relation("BatchStudents", fields: [batchId], references: [id])
+  createdBatches Batch[]  @relation("BatchCreator")
+
+  @@index([batchId])
   @@map("users")
 }
 
@@ -304,7 +310,6 @@ model Profile {
   // Existing fields (keeping for compatibility)
   phone          String? // Deprecated - use callingMobile
   alternatePhone String? @map("alternate_phone") // Deprecated - use alternativeMobile
-  department     String? // Deprecated - use branch
   course         String? // Keep for course type
   specialization String?
   semester       Int?
@@ -634,6 +639,7 @@ model Notification {
   type      NotificationType
   isRead    Boolean          @default(false) @map("is_read")
   data      Json? // Extra data (jobId, eventId, etc.)
+  batchId   String?          @map("batch_id") // Optional batch scope for targeted notifications
   createdAt DateTime         @default(now()) @map("created_at")
   readAt    DateTime?        @map("read_at")
 
@@ -744,6 +750,7 @@ model PushSubscription {
   endpoint  String   @unique
   p256dh    String // Public key for encryption
   auth      String // Auth secret
+  userAgent String?  @map("user_agent")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
@@ -764,6 +771,7 @@ model AdminSettings {
   id                   String   @id @default("default")
   activeAdmissionYears String[] @default(["22"]) @map("active_admission_years")
   collegeCode          String   @default("2SD") @map("college_code")
+  maxActiveBatches     Int      @default(2) @map("max_active_batches")
   updatedAt            DateTime @updatedAt @map("updated_at")
   updatedBy            String?  @map("updated_by")
 
@@ -807,4 +815,29 @@ enum BackupStatus {
   PENDING
   COMPLETED
   FAILED
+}
+
+// Batch Management - supports up to 2 active batches simultaneously
+enum BatchStatus {
+  SETUP    // Being configured, not yet visible to students
+  ACTIVE   // Live — students can register and access placement portal
+  ARCHIVED // Past batch — records preserved, no new activity
+}
+
+model Batch {
+  id            String      @id @default(cuid())
+  name          String // e.g. "2022-2026"
+  admissionYear String      @map("admission_year") // e.g. "22" — matches USN convention
+  collegeCode   String      @default("2SD") @map("college_code")
+  status        BatchStatus @default(SETUP)
+  startedAt     DateTime?   @map("started_at") // When status moved to ACTIVE
+  archivedAt    DateTime?   @map("archived_at") // When status moved to ARCHIVED
+  createdBy     String      @map("created_by")
+  creator       User        @relation("BatchCreator", fields: [createdBy], references: [id])
+  students      User[]      @relation("BatchStudents")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("batches")
 }

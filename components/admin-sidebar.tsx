@@ -14,6 +14,8 @@ import {
   LogOut,
   Download,
   Settings,
+  ScanLine,
+  GraduationCap,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 
@@ -55,6 +57,11 @@ const navigationItems = [
     icon: Building,
   },
   {
+    title: "Attendance",
+    url: "/admin/attendance",
+    icon: ScanLine,
+  },
+  {
     title: "Schedule",
     url: "/admin/schedule",
     icon: Calendar,
@@ -63,6 +70,11 @@ const navigationItems = [
     title: "Notifications",
     url: "/admin/notifications",
     icon: Bell,
+  },
+  {
+    title: "Batches",
+    url: "/admin/batches",
+    icon: GraduationCap,
   },
   {
     title: "Analytics",

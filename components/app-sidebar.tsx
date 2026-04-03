@@ -2,22 +2,22 @@
 
 import * as React from "react"
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-} from "@tabler/icons-react"
+  Camera,
+  BarChart2,
+  LayoutDashboard,
+  Database,
+  Sparkles,
+  FileText,
+  File,
+  Folder,
+  HelpCircle,
+  Circle,
+  ClipboardList,
+  FileBarChart,
+  Search,
+  Settings,
+  Users,
+} from "lucide-react"
 
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
@@ -43,110 +43,68 @@ const data = {
     {
       title: "Dashboard",
       url: "#",
-      icon: IconDashboard,
+      icon: LayoutDashboard,
     },
     {
       title: "Lifecycle",
       url: "#",
-      icon: IconListDetails,
+      icon: ClipboardList,
     },
     {
       title: "Analytics",
       url: "#",
-      icon: IconChartBar,
+      icon: BarChart2,
     },
     {
       title: "Projects",
       url: "#",
-      icon: IconFolder,
+      icon: Folder,
     },
     {
       title: "Team",
       url: "#",
-      icon: IconUsers,
+      icon: Users,
     },
   ],
   navClouds: [
     {
       title: "Capture",
-      icon: IconCamera,
+      icon: Camera,
       isActive: true,
       url: "#",
       items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
+        { title: "Active Proposals", url: "#" },
+        { title: "Archived", url: "#" },
       ],
     },
     {
       title: "Proposal",
-      icon: IconFileDescription,
+      icon: FileText,
       url: "#",
       items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
+        { title: "Active Proposals", url: "#" },
+        { title: "Archived", url: "#" },
       ],
     },
     {
       title: "Prompts",
-      icon: IconFileAi,
+      icon: Sparkles,
       url: "#",
       items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
+        { title: "Active Proposals", url: "#" },
+        { title: "Archived", url: "#" },
       ],
     },
   ],
   navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
+    { title: "Settings", url: "#", icon: Settings },
+    { title: "Get Help", url: "#", icon: HelpCircle },
+    { title: "Search", url: "#", icon: Search },
   ],
   documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
+    { name: "Data Library", url: "#", icon: Database },
+    { name: "Reports", url: "#", icon: FileBarChart },
+    { name: "Word Assistant", url: "#", icon: File },
   ],
 }
 
@@ -161,7 +119,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <Circle className="!size-5" />
                 <span className="text-base font-semibold">Acme Inc.</span>
               </a>
             </SidebarMenuButton>

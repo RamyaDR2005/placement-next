@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth"
-import { IconCircleCheck, IconAlertCircle, IconEye, IconEyeOff } from "@tabler/icons-react"
+import { Eye, EyeOff } from "lucide-react"
 import { LoadingSpinner } from "@/components/ui/loading"
 
 export function LoginForm({
@@ -54,9 +54,7 @@ export function LoginForm({
     const error = searchParams.get("error")
 
     if (success === "email-verified") {
-      toast.success("Email verified successfully! You can now sign in.", {
-        icon: <IconCircleCheck className="h-5 w-5 text-green-500" />,
-      })
+      toast.success("Email verified successfully! You can now sign in.")
     } else if (error === "missing-token") {
       toast.error("Invalid verification link.")
     } else if (error === "verification-failed") {
@@ -118,9 +116,7 @@ export function LoginForm({
           toast.error("Invalid email or password")
         }
       } else if (result?.ok) {
-        toast.success("Welcome back!", {
-          icon: <IconCircleCheck className="h-5 w-5 text-green-500" />,
-        })
+        toast.success("Welcome back!")
 
         try {
           const profileResponse = await fetch("/api/profile")
@@ -205,9 +201,6 @@ export function LoginForm({
                     disabled={isLoading}
                     {...register("email")}
                   />
-                  {errors.email && (
-                    <IconAlertCircle className="h-4 w-4 text-red-500 absolute right-3 top-1/2 -translate-y-1/2" />
-                  )}
                 </div>
                 {errors.email && (
                   <p className="text-xs text-red-500 flex items-center gap-1">
@@ -240,22 +233,13 @@ export function LoginForm({
                     disabled={isLoading}
                     {...register("password")}
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    {errors.password && (
-                      <IconAlertCircle className="h-4 w-4 text-red-500" />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? (
-                        <IconEyeOff className="h-4 w-4" />
-                      ) : (
-                        <IconEye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-xs text-red-500">{errors.password.message}</p>
