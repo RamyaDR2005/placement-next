@@ -29,26 +29,17 @@ export default async function NotificationsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex h-16 shrink-0 items-center gap-2 px-4 border-b">
-        <h1 className="text-3xl font-bold">Notifications</h1>
+    <div className="px-6 py-6 max-w-6xl mx-auto space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">Notifications</h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          Send in-app notifications and push alerts to students ·{" "}
+          {pushSubscriberCount} student{pushSubscriberCount !== 1 ? "s" : ""} have push enabled
+        </p>
       </div>
-      <div className="container mx-auto max-w-6xl px-4 py-8 space-y-8">
-        <div>
-          <p className="text-muted-foreground">
-            Send in-app notifications and browser push alerts to students
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {pushSubscriberCount} student{pushSubscriberCount !== 1 ? "s" : ""} have push notifications enabled
-          </p>
-        </div>
 
-        {/* Browser Push — shown first as it's the new channel */}
-        <PushNotificationSender activeBatches={activeBatches} />
-
-        {/* In-app / Email Bulk Notifications */}
-        <BulkNotifications stats={stats} adminId={session!.user.id} />
-      </div>
+      <PushNotificationSender activeBatches={activeBatches} />
+      <BulkNotifications stats={stats} adminId={session!.user.id} />
     </div>
   )
 }

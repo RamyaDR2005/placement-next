@@ -8,7 +8,6 @@ import { canApplyToTier, getHighestTier } from "@/lib/placement-rules"
 type JobWithDetails = {
     id: string
     title: string
-    companyId: string | null
     companyName: string
     companyLogo: string | null
     location: string
@@ -122,7 +121,6 @@ export async function GET(request: NextRequest) {
                 select: {
                     id: true,
                     title: true,
-                    companyId: true,
                     companyName: true,
                     companyLogo: true,
                     location: true,

@@ -6,11 +6,10 @@ import { Prisma } from "@prisma/client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import type { Job } from "@prisma/client"
 import { JobsFilterBar } from "@/components/admin/jobs-filter-bar"
 import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
   title: "Job Management | Admin",
@@ -19,18 +18,18 @@ export const metadata: Metadata = {
 
 type JobWithCount = Job & { _count: { applications: number } }
 
-const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "bg-green-100 text-green-800",
-  DRAFT: "bg-yellow-100 text-yellow-800",
-  CLOSED: "bg-gray-100 text-gray-800",
-  CANCELLED: "bg-red-100 text-red-800",
+const STATUS_CONFIG: Record<string, { label: string; badge: string }> = {
+  ACTIVE:    { label: "Active",    badge: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  DRAFT:     { label: "Draft",     badge: "bg-amber-50 text-amber-700 ring-amber-100" },
+  CLOSED:    { label: "Closed",    badge: "bg-zinc-100 text-zinc-500 ring-zinc-100" },
+  CANCELLED: { label: "Cancelled", badge: "bg-red-50 text-red-600 ring-red-100" },
 }
 
-const TIER_LABELS: Record<string, string> = {
-  DREAM: "Dream",
-  TIER_1: "Tier 1",
-  TIER_2: "Tier 2",
-  TIER_3: "Tier 3",
+const TIER_CONFIG: Record<string, { label: string; badge: string }> = {
+  DREAM:  { label: "Dream",  badge: "bg-violet-50 text-violet-700 ring-violet-100" },
+  TIER_1: { label: "Tier 1", badge: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  TIER_2: { label: "Tier 2", badge: "bg-blue-50 text-blue-700 ring-blue-100" },
+  TIER_3: { label: "Tier 3", badge: "bg-amber-50 text-amber-700 ring-amber-100" },
 }
 
 export default async function JobManagementPage({
@@ -47,12 +46,10 @@ export default async function JobManagementPage({
 
   const where: Prisma.JobWhereInput = {
     ...(q
-      ? {
-          OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { companyName: { contains: q, mode: "insensitive" } },
-          ],
-        }
+      ? { OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { companyName: { contains: q, mode: "insensitive" } },
+        ] }
       : {}),
     ...(status ? { status: status as any } : {}),
     ...(tier ? { tier: tier as any } : {}),
@@ -76,124 +73,136 @@ export default async function JobManagementPage({
   const totalPages = Math.ceil(totalFiltered / PAGE_SIZE)
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="px-6 py-6 space-y-6 max-w-7xl mx-auto">
+
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Job Management</h1>
-          <p className="text-muted-foreground mt-1">Create and manage job postings for students</p>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">
+            Job Management
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">Create and manage job postings for students</p>
         </div>
         <Link href="/admin/jobs/new">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Post New Job
+          <Button className="bg-[#18181B] hover:bg-zinc-800 text-white h-9 text-sm gap-1.5">
+            <Plus className="h-4 w-4" /> Post New Job
           </Button>
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      {/* Stats strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Jobs", value: totalJobs },
-          { label: "Active Jobs", value: activeJobs, color: "text-green-600" },
-          { label: "Draft Jobs", value: draftJobs, color: "text-yellow-600" },
-          { label: "Total Applications", value: totalApplications },
+          { label: "Total Jobs", value: totalJobs, color: "text-[#18181B]" },
+          { label: "Active", value: activeJobs, color: "text-emerald-600" },
+          { label: "Draft", value: draftJobs, color: "text-amber-600" },
+          { label: "Applications", value: totalApplications, color: "text-blue-600" },
         ].map(({ label, value, color }) => (
-          <Card key={label}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">{label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${color ?? ""}`}>{value}</div>
-            </CardContent>
-          </Card>
+          <div key={label} className="rounded-xl border border-[#E8E5E1] bg-white px-4 py-4">
+            <p className="text-xs text-zinc-500 font-medium">{label}</p>
+            <p className={cn("text-2xl font-bold tracking-tight mt-1", color)}>{value}</p>
+          </div>
         ))}
       </div>
 
-      {/* Search + Filter Bar */}
+      {/* Filter bar */}
       <JobsFilterBar filters={{ q, status: status ?? "", tier: tier ?? "" }} totalFiltered={totalFiltered} />
 
-      {/* Job List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {q || status || tier ? `Filtered Results (${totalFiltered})` : "All Job Postings"}
-          </CardTitle>
-          <CardDescription>Click a job to view applicants or edit</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {jobs.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                {q || status || tier ? "No jobs match the current filters." : "No jobs posted yet."}
-              </p>
-              <Link href="/admin/jobs/new">
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Post Your First Job
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {(jobs as JobWithCount[]).map((job) => (
-                <div key={job.id} className="border rounded-lg p-4 hover:bg-muted/40 transition-colors">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <h3 className="font-medium">{job.title}</h3>
-                        <Badge className={STATUS_COLORS[job.status]}>{job.status}</Badge>
-                        <Badge variant="outline">{TIER_LABELS[job.tier] ?? job.tier}</Badge>
-                        {!job.isVisible && <Badge variant="outline">Hidden</Badge>}
-                      </div>
-                      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                        <span>{job.companyName}</span>
-                        <span>·</span>
-                        <span>{job.location}</span>
-                        <span>·</span>
-                        <span>{job._count.applications} applications</span>
-                        {job.deadline && (
-                          <>
-                            <span>·</span>
-                            <span>Due {format(new Date(job.deadline), "d MMM yyyy")}</span>
-                          </>
-                        )}
-                        {job.salary && (
-                          <>
-                            <span>·</span>
-                            <span className="font-medium text-foreground">{job.salary}</span>
-                          </>
-                        )}
-                      </div>
+      {/* Job list */}
+      <div className="rounded-2xl border border-[#E8E5E1] bg-white overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#E8E5E1]">
+          <p className="text-sm font-medium text-[#18181B]">
+            {q || status || tier ? `Filtered results (${totalFiltered})` : `All job postings (${totalJobs})`}
+          </p>
+        </div>
+
+        {jobs.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-sm text-zinc-500 mb-4">
+              {q || status || tier ? "No jobs match the current filters." : "No jobs posted yet."}
+            </p>
+            <Link href="/admin/jobs/new">
+              <Button className="bg-[#18181B] text-white hover:bg-zinc-800 h-9 text-sm gap-1.5">
+                <Plus className="h-4 w-4" /> Post Your First Job
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-[#F0EDE8]">
+            {(jobs as JobWithCount[]).map((job) => {
+              const statusCfg = STATUS_CONFIG[job.status]
+              const tierCfg = TIER_CONFIG[job.tier] ?? TIER_CONFIG.TIER_3
+              return (
+                <div key={job.id} className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-50/60 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-[#18181B]">{job.title}</span>
+                      {statusCfg && (
+                        <span className={cn(
+                          "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset uppercase tracking-wide",
+                          statusCfg.badge
+                        )}>
+                          {statusCfg.label}
+                        </span>
+                      )}
+                      <span className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset uppercase tracking-wide",
+                        tierCfg.badge
+                      )}>
+                        {tierCfg.label}
+                      </span>
+                      {!job.isVisible && (
+                        <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-500">
+                          Hidden
+                        </span>
+                      )}
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Link href={`/admin/jobs/${job.id}/applicants`}>
-                        <Button variant="outline" size="sm">Applicants</Button>
-                      </Link>
-                      <Link href={`/admin/jobs/${job.id}/edit`}>
-                        <Button variant="outline" size="sm">Edit</Button>
-                      </Link>
+                    <div className="flex flex-wrap gap-x-3 text-xs text-zinc-500">
+                      <span>{job.companyName}</span>
+                      <span>·</span>
+                      <span>{job.location}</span>
+                      <span>·</span>
+                      <span>{job._count.applications} applications</span>
+                      {job.deadline && (
+                        <><span>·</span><span>Due {format(new Date(job.deadline), "d MMM yyyy")}</span></>
+                      )}
+                      {job.salary && (
+                        <><span>·</span><span className="font-medium text-zinc-700">{job.salary} LPA</span></>
+                      )}
                     </div>
                   </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Link href={`/admin/jobs/${job.id}/applicants`}>
+                      <Button variant="outline" size="sm" className="h-8 text-xs border-[#E8E5E1] hover:bg-zinc-50">
+                        Applicants
+                      </Button>
+                    </Link>
+                    <Link href={`/admin/jobs/${job.id}/edit`}>
+                      <Button variant="outline" size="sm" className="h-8 text-xs border-[#E8E5E1] hover:bg-zinc-50">
+                        Edit
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Page {page} of {totalPages}</p>
-          <div className="flex gap-1">
+          <p className="text-xs text-zinc-500">Page {page} of {totalPages}</p>
+          <div className="flex gap-1.5">
             {page > 1 && (
               <Link href={`/admin/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(status ? { status } : {}), ...(tier ? { tier } : {}), page: String(page - 1) })}`}>
-                <Button variant="outline" size="sm">Previous</Button>
+                <Button variant="outline" size="sm" className="h-8 border-[#E8E5E1] text-xs">Previous</Button>
               </Link>
             )}
             {page < totalPages && (
               <Link href={`/admin/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(status ? { status } : {}), ...(tier ? { tier } : {}), page: String(page + 1) })}`}>
-                <Button variant="outline" size="sm">Next</Button>
+                <Button variant="outline" size="sm" className="h-8 border-[#E8E5E1] text-xs">Next</Button>
               </Link>
             )}
           </div>

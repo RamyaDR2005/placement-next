@@ -13,7 +13,7 @@ export default async function AttendanceListPage() {
     where: { id: session.user.id },
     select: { role: true },
   })
-  if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) redirect("/dashboard")
+  if (!user || user.role !== "ADMIN") redirect("/dashboard")
 
   // Get filter options
   const jobs = await prisma.job.findMany({

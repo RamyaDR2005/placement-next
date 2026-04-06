@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -343,13 +344,19 @@ export function StudentManagementView({ students, totalCount }: StudentManagemen
                           )}
                           
                           <DialogFooter>
-                            <Button variant="outline">
-                              <Mail className="h-4 w-4" />
-                              Send Email
-                            </Button>
-                            <Button>
-                              <UserCheck className="h-4 w-4" />
-                              Verify Profile
+                            {selectedStudent?.user?.email && (
+                              <Button variant="outline" asChild>
+                                <a href={`mailto:${selectedStudent.user.email}`}>
+                                  <Mail className="h-4 w-4" />
+                                  Send Email
+                                </a>
+                              </Button>
+                            )}
+                            <Button asChild>
+                              <Link href="/admin/students/kyc">
+                                <UserCheck className="h-4 w-4" />
+                                Verify Profile
+                              </Link>
                             </Button>
                           </DialogFooter>
                         </DialogContent>

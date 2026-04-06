@@ -1,149 +1,136 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-
-const stats = [
-  { value: "500+", label: "Students Placed" },
-  { value: "50+", label: "Partner Companies" },
-  { value: "25+", label: "Active Jobs" },
-  { value: "95%", label: "Success Rate" },
-]
-
-const features = [
-  {
-    title: "Guided Profile Setup",
-    description:
-      "Build your professional profile with academic details, skills, and achievements in a structured step-by-step flow.",
-  },
-  {
-    title: "KYC Verification",
-    description:
-      "Secure identity verification ensures only verified students access placement opportunities.",
-  },
-  {
-    title: "Job Discovery",
-    description:
-      "Browse and apply to curated opportunities from top companies visiting campus, filtered by tier and eligibility.",
-  },
-  {
-    title: "Application Tracking",
-    description:
-      "Monitor your application status in real-time — from submission through interviews to final selection.",
-  },
-]
-
-const steps = [
-  { step: "01", title: "Sign Up", description: "Create your account with your college email" },
-  { step: "02", title: "Complete Profile", description: "Fill in academic and personal details" },
-  { step: "03", title: "Get Verified", description: "Submit documents for KYC verification" },
-  { step: "04", title: "Apply to Jobs", description: "Explore opportunities and apply with one click" },
-]
 
 export default async function Home() {
   const session = await auth()
-  if (session?.user) redirect("/dashboard")
+  if (session?.user) {
+    redirect(session.user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard")
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-neutral-200 bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="font-semibold text-sm tracking-tight">
+    <div className="min-h-screen bg-[#FAFAF9] text-[#18181B]">
+
+      {/* ── Nav ─────────────────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 border-b border-[#E8E5E1] bg-[#FAFAF9]/90 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-5 sm:px-8">
+          <span className="font-display text-base font-semibold tracking-tight text-[#18181B]">
             CampusConnect
-          </Link>
+          </span>
           <div className="flex items-center gap-2">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-neutral-600 hover:text-neutral-900">
-                Log in
-              </Button>
+            <Link
+              href="/login"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-[#52525B] transition-colors hover:bg-[#F4F0EB] hover:text-[#18181B]"
+            >
+              Sign in
             </Link>
-            <Link href="/signup">
-              <Button size="sm">Get started</Button>
+            <Link
+              href="/signup"
+              className="rounded-lg bg-[#18181B] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-[#27272A] hover:shadow-md"
+            >
+              Get started
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-screen-xl px-4 sm:px-6 pt-20 pb-16 lg:pt-28 lg:pb-24 text-center">
-        <Badge variant="secondary" className="mb-6 rounded-full px-3 py-1 text-xs font-medium">
-          Trusted by 500+ students at SDMCET
-        </Badge>
-        <h1 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl lg:text-[3.5rem]">
-          Your gateway to<br className="hidden sm:block" /> campus placements
-        </h1>
-        <p className="mt-6 mx-auto max-w-2xl text-lg text-neutral-500">
-          The official placement portal of SDMCET. Connect with top companies,
-          track your applications, and launch your career with confidence.
-        </p>
-        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Link href="/signup">
-            <Button size="lg" className="px-6">Create free account</Button>
-          </Link>
-          <Link href="/login">
-            <Button variant="outline" size="lg" className="px-6">Sign in</Button>
-          </Link>
-        </div>
-      </section>
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden">
+        {/* Dot-grid texture */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.035]"
+          style={{
+            backgroundImage: "radial-gradient(circle, #18181B 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+        {/* Amber glow blob */}
+        <div className="pointer-events-none absolute -top-32 right-0 h-[520px] w-[520px] rounded-full bg-amber-100 opacity-50 blur-[100px]" />
 
-      {/* Stats */}
-      <section className="border-y border-neutral-200 bg-neutral-50/60">
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-10">
-          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-3xl font-bold tracking-tight text-neutral-900">{s.value}</div>
-                <div className="mt-1 text-sm text-neutral-500">{s.label}</div>
+        <div className="relative mx-auto max-w-screen-xl px-5 sm:px-8 pb-20 pt-20 lg:pt-28">
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1 text-xs font-medium text-amber-800">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              SDMCET Official Placement Portal
+            </span>
+            <h1 className="font-display mt-4 text-[2.75rem] font-semibold leading-[1.15] tracking-tight text-[#18181B] sm:text-5xl lg:text-[3.5rem]">
+              Your next chapter starts{" "}
+              <span className="relative">
+                <span className="relative z-10">right here</span>
+                <span
+                  className="absolute -bottom-1 left-0 right-0 z-0 h-3 -rotate-1 rounded bg-amber-200/70"
+                  aria-hidden="true"
+                />
+              </span>
+            </h1>
+            <p className="mt-6 text-lg leading-relaxed text-[#71717A]">
+              One platform to build your profile, connect with top companies, and
+              track every step of your placement journey — from KYC to offer letter.
+            </p>
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/signup"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#18181B] px-6 text-sm font-medium text-white shadow-md transition-all hover:bg-[#27272A] hover:shadow-lg"
+              >
+                Create your profile
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex h-11 items-center rounded-xl border border-[#E8E5E1] bg-white px-6 text-sm font-medium text-[#52525B] shadow-sm transition-all hover:border-[#D4CFC9] hover:bg-[#F7F5F3]"
+              >
+                Already registered? Sign in
+              </Link>
+            </div>
+          </div>
+
+          {/* Preview card strip */}
+          <div className="mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { value: "500+", label: "Students Placed", color: "bg-emerald-50 border-emerald-100" },
+              { value: "50+", label: "Partner Companies", color: "bg-blue-50 border-blue-100" },
+              { value: "25+", label: "Active Jobs", color: "bg-violet-50 border-violet-100" },
+              { value: "95%", label: "Success Rate", color: "bg-amber-50 border-amber-100" },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className={`rounded-2xl border p-5 text-center ${s.color}`}
+              >
+                <p className="font-display text-3xl font-semibold text-[#18181B]">{s.value}</p>
+                <p className="mt-1 text-xs font-medium text-[#71717A]">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="mx-auto max-w-screen-xl px-4 sm:px-6 py-20 lg:py-28">
-        <div className="mx-auto max-w-xl text-center mb-14">
-          <h2 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-            Everything you need
-          </h2>
-          <p className="mt-3 text-neutral-500">
-            A complete platform designed to streamline your placement journey
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-xl border border-neutral-200 bg-white p-5 hover:border-neutral-300 transition-colors"
-            >
-              <h3 className="text-sm font-semibold text-neutral-900">{f.title}</h3>
-              <p className="mt-2 text-sm text-neutral-500 leading-relaxed">{f.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="border-y border-neutral-200 bg-neutral-50/60">
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-20 lg:py-28">
-          <div className="mx-auto max-w-xl text-center mb-14">
-            <h2 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              How it works
+      {/* ── How it works ─────────────────────────────────────── */}
+      <section className="border-y border-[#E8E5E1] bg-white">
+        <div className="mx-auto max-w-screen-xl px-5 sm:px-8 py-16 lg:py-20">
+          <div className="mx-auto max-w-xl text-center mb-12">
+            <h2 className="font-display text-2xl font-semibold text-[#18181B] sm:text-3xl">
+              From registration to offer — in four steps
             </h2>
-            <p className="mt-3 text-neutral-500">Get started in four simple steps</p>
           </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((s, i) => (
-              <div key={s.step} className="relative">
-                {i < steps.length - 1 && (
-                  <div className="absolute left-1/2 top-4 hidden h-px w-full bg-neutral-200 lg:block" />
+          <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { step: "01", title: "Sign Up", desc: "Create your account with your college email address" },
+              { step: "02", title: "Build Profile", desc: "Fill in academic and personal details in a guided flow" },
+              { step: "03", title: "Get Verified", desc: "Submit documents for KYC verification by admin" },
+              { step: "04", title: "Apply & Get Placed", desc: "Browse curated jobs and track every application" },
+            ].map((s, i) => (
+              <div key={s.step} className="relative flex gap-4 p-6 lg:flex-col lg:gap-3">
+                {i < 3 && (
+                  <div className="absolute right-0 top-1/2 hidden h-px w-6 -translate-y-1/2 bg-[#E8E5E1] lg:block" />
                 )}
-                <div className="relative flex flex-col">
-                  <span className="text-xs font-mono font-semibold text-neutral-400 mb-3">{s.step}</span>
-                  <h3 className="text-sm font-semibold text-neutral-900">{s.title}</h3>
-                  <p className="mt-1.5 text-sm text-neutral-500">{s.description}</p>
+                <span className="font-display shrink-0 text-4xl font-bold text-[#E8E5E1] lg:text-5xl">
+                  {s.step}
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold text-[#18181B]">{s.title}</h3>
+                  <p className="mt-1 text-sm text-[#71717A] leading-relaxed">{s.desc}</p>
                 </div>
               </div>
             ))}
@@ -151,34 +138,104 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-screen-xl px-4 sm:px-6 py-20 lg:py-28">
-        <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-200 bg-neutral-900 px-8 py-12 text-center sm:px-12">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl tracking-tight">
-            Ready to start your career journey?
-          </h2>
-          <p className="mt-3 text-neutral-400">
-            Join hundreds of students who found their dream jobs through CampusConnect.
+      {/* ── Features ─────────────────────────────────────────── */}
+      <section className="mx-auto max-w-screen-xl px-5 sm:px-8 py-16 lg:py-24">
+        <div className="mb-12 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="font-display text-2xl font-semibold text-[#18181B] sm:text-3xl">
+              Everything you need,<br className="hidden sm:block" /> nothing you don't
+            </h2>
+          </div>
+          <p className="max-w-sm text-sm text-[#71717A] leading-relaxed">
+            CampusConnect is purpose-built for campus placements — no bloat, no noise. Just the tools that matter.
           </p>
-          <div className="mt-8">
-            <Link href="/signup">
-              <Button size="lg" variant="secondary" className="px-8">
-                Get started free
-              </Button>
-            </Link>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              icon: "◎",
+              title: "Guided Profile Setup",
+              desc: "Build your complete professional profile in a structured 5-step flow.",
+              accent: "bg-amber-50 text-amber-600",
+            },
+            {
+              icon: "✦",
+              title: "KYC Verification",
+              desc: "Secure identity verification ensures only eligible students access opportunities.",
+              accent: "bg-emerald-50 text-emerald-600",
+            },
+            {
+              icon: "⊞",
+              title: "Tier-Based Jobs",
+              desc: "Browse curated opportunities filtered by tier, branch, and your CGPA eligibility.",
+              accent: "bg-blue-50 text-blue-600",
+            },
+            {
+              icon: "◈",
+              title: "Real-Time Tracking",
+              desc: "Monitor your application from submission through interviews to the offer letter.",
+              accent: "bg-violet-50 text-violet-600",
+            },
+          ].map((f) => (
+            <div
+              key={f.title}
+              className="group rounded-2xl border border-[#E8E5E1] bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-[#D4CFC9] hover:shadow-md"
+            >
+              <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl text-base ${f.accent}`}>
+                {f.icon}
+              </span>
+              <h3 className="mt-4 text-sm font-semibold text-[#18181B]">{f.title}</h3>
+              <p className="mt-2 text-sm text-[#71717A] leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-screen-xl px-5 sm:px-8 pb-20">
+        <div className="relative overflow-hidden rounded-3xl bg-[#18181B] px-8 py-14 text-center sm:px-12">
+          {/* Subtle pattern */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-amber-500 opacity-10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-amber-500 opacity-10 blur-3xl" />
+          <div className="relative">
+            <h2 className="font-display text-2xl font-semibold text-white sm:text-3xl">
+              Ready to launch your career?
+            </h2>
+            <p className="mt-3 text-sm text-[#A1A1AA]">
+              Join hundreds of SDMCET students who found their dream jobs through CampusConnect.
+            </p>
+            <div className="mt-8">
+              <Link
+                href="/signup"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-amber-400 px-7 text-sm font-semibold text-[#18181B] shadow-lg transition-all hover:bg-amber-300 hover:shadow-xl"
+              >
+                Create free account
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-neutral-200">
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row text-sm text-neutral-500">
-            <span className="font-semibold text-neutral-900">CampusConnect</span>
+      {/* ── Footer ───────────────────────────────────────────── */}
+      <footer className="border-t border-[#E8E5E1]">
+        <div className="mx-auto max-w-screen-xl px-5 sm:px-8 py-8">
+          <div className="flex flex-col items-center justify-between gap-4 text-sm text-[#A1A1AA] sm:flex-row">
+            <span className="font-display font-semibold text-[#52525B]">CampusConnect</span>
             <p>© {new Date().getFullYear()} SDMCET. All rights reserved.</p>
             <div className="flex gap-5">
-              <Link href="/privacy" className="hover:text-neutral-900 transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-neutral-900 transition-colors">Terms</Link>
+              <Link href="/privacy" className="transition-colors hover:text-[#18181B]">Privacy</Link>
+              <Link href="/terms" className="transition-colors hover:text-[#18181B]">Terms</Link>
             </div>
           </div>
         </div>

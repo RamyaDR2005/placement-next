@@ -1,21 +1,21 @@
+import NextAuth from "next-auth"
+import { authConfig } from "@/lib/auth.config"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// Security headers
-const securityHeaders = {
-  // Prevent clickjacking
+// Build an Edge-safe auth handler using the Prisma-free config.
+// This only decodes the JWT cookie — no DB calls happen here.
+const { auth } = NextAuth(authConfig)
+
+// Security headers applied to every response
+const securityHeaders: Record<string, string> = {
   "X-Frame-Options": "DENY",
-  // Prevent MIME type sniffing
   "X-Content-Type-Options": "nosniff",
-  // Enable XSS protection
   "X-XSS-Protection": "1; mode=block",
-  // Referrer policy
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  // Permissions policy
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 }
 
-// Content Security Policy
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline';
@@ -26,81 +26,98 @@ const cspHeader = `
   frame-ancestors 'none';
   base-uri 'self';
   form-action 'self';
-`.replace(/\s{2,}/g, ' ').trim()
+`.replace(/\s{2,}/g, " ").trim()
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const response = NextResponse.next()
+// Routes that don't need auth checks
+const PUBLIC_PREFIXES = [
+  "/api/",
+  "/_next/",
+  "/favicon.ico",
+  "/uploads/",
+  "/login",
+  "/signup",
+  "/verify-email",
+  "/not-authorized",
+  "/sw.js",
+]
 
-  // Apply security headers to all responses
-  Object.entries(securityHeaders).forEach(([key, value]) => {
+// Student-only routes — admins are redirected away from these
+const STUDENT_ROUTES = [
+  "/dashboard",
+  "/jobs",
+  "/applications",
+  "/schedule",
+  "/attendance",
+  "/documents",
+  "/notifications",
+  "/profile",
+  "/settings",
+]
+
+const ADMIN_ROLES = new Set(["ADMIN"])
+
+function applySecurityHeaders(response: NextResponse, isProduction: boolean) {
+  for (const [key, value] of Object.entries(securityHeaders)) {
     response.headers.set(key, value)
-  })
-
-  // Only apply CSP in production to avoid development issues
-  if (process.env.NODE_ENV === "production") {
+  }
+  if (isProduction) {
     response.headers.set("Content-Security-Policy", cspHeader)
   }
+}
 
-  // Skip middleware for API routes, static files, and auth pages
+export default auth((req: NextRequest & { auth: { user?: { role?: string } } | null }) => {
+  const { pathname } = req.nextUrl
+  const isProduction = process.env.NODE_ENV === "production"
+
+  // ── Skip public/static paths ─────────────────────────────────────────────
   if (
-    pathname.startsWith("/api/") ||
-    pathname.startsWith("/_next/") ||
-    pathname.startsWith("/favicon.ico") ||
-    pathname.startsWith("/uploads/") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/signup") ||
-    pathname.startsWith("/verify-email") ||
-    pathname.startsWith("/not-authorized") ||
+    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
     pathname.includes(".")
   ) {
-    return response
+    const res = NextResponse.next()
+    applySecurityHeaders(res, isProduction)
+    return res
   }
 
-  // Get session token from cookies to check authentication without importing auth.
-  // Support both NextAuth v4/v5 cookie name conventions:
-  //   next-auth.*          — v4 / v5 early betas
-  //   authjs.*             — v5 beta.30+ new default
-  //   __Secure-*           — HTTPS variants of each
-  const sessionToken =
-    request.cookies.get("next-auth.session-token")?.value ||
-    request.cookies.get("__Secure-next-auth.session-token")?.value ||
-    request.cookies.get("authjs.session-token")?.value ||
-    request.cookies.get("__Secure-authjs.session-token")?.value
+  const session = req.auth
+  const role = session?.user?.role ?? null
+  const isAdmin = ADMIN_ROLES.has(role ?? "")
 
-  // If user is not authenticated, redirect to login
-  if (!sessionToken) {
+  // ── Unauthenticated — redirect to login ──────────────────────────────────
+  if (!session) {
     if (pathname !== "/") {
-      const loginUrl = new URL("/login", request.url)
+      const loginUrl = new URL("/login", req.url)
       loginUrl.searchParams.set("callbackUrl", pathname)
       return NextResponse.redirect(loginUrl)
     }
-    return response
+    const res = NextResponse.next()
+    applySecurityHeaders(res, isProduction)
+    return res
   }
 
-  // For authenticated users on admin routes, verify admin role
-  // This is a basic check - full verification happens in the layout
-  if (pathname.startsWith("/admin")) {
-    // Let the admin layout handle the full role verification
-    return response
+  // ── Admin role: redirect away from root and all student routes ───────────
+  if (isAdmin) {
+    const isStudentRoute = STUDENT_ROUTES.some(
+      (r) => pathname === r || pathname.startsWith(r + "/")
+    )
+    if (isStudentRoute || pathname === "/") {
+      return NextResponse.redirect(new URL("/admin/dashboard", req.url))
+    }
   }
 
-  // For authenticated users, let the page components handle profile checks
-  // This avoids Edge Runtime issues with Prisma and other Node.js modules
+  // ── Non-admin: redirect away from admin routes ───────────────────────────
+  if (!isAdmin && pathname.startsWith("/admin")) {
+    return NextResponse.redirect(new URL("/dashboard", req.url))
+  }
 
-  return response
-}
+  // ── Authenticated, correct role for the route — apply security headers ───
+  const res = NextResponse.next()
+  applySecurityHeaders(res, isProduction)
+  return res
+})
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - uploads (file uploads)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|uploads).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|uploads|sw\\.js).*)",
   ],
 }

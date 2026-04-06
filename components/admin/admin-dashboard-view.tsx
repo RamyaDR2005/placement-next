@@ -1,43 +1,30 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
 import {
   Users,
   UserCheck,
   Clock,
-  Calendar,
-  TrendingUp,
-  FileText,
-  CheckCircle,
-  AlertCircle,
-  Activity,
-  Building2,
   Briefcase,
-  GraduationCap,
-  BarChart3,
-  MessageSquare,
-  Bell,
-  Eye
+  TrendingUp,
+  CheckCircle2,
+  AlertCircle,
+  FileText,
+  CalendarDays,
+  ArrowRight,
+  Radio,
 } from "lucide-react"
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart
 } from "recharts"
 import Link from "next/link"
 
@@ -45,7 +32,6 @@ interface DashboardOverview {
   totalStudents: number
   verifiedStudents: number
   pendingVerifications: number
-  totalRecruiters: number
   activeJobPostings: number
   totalApplications: number
   placedStudents: number
@@ -72,10 +58,7 @@ interface DashboardActivity {
   id: string
   firstName: string | null
   lastName: string | null
-  user: {
-    name: string | null
-    email: string | null
-  }
+  user: { name: string | null; email: string | null }
   updatedAt: Date
   kycStatus: string
 }
@@ -92,395 +75,288 @@ interface AdminDashboardData {
   siteSettings: SiteSettingsData
   activities: DashboardActivity[]
   stats: DashboardStats
-  user: {
-    name: string
-    email: string
-  }
+  user: { name: string; email: string }
 }
 
-interface AdminDashboardViewProps {
-  data: AdminDashboardData
+const TIER_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  DREAM:  { label: "Dream",  color: "text-violet-600", bg: "bg-violet-50" },
+  TIER_1: { label: "Tier 1", color: "text-emerald-600", bg: "bg-emerald-50" },
+  TIER_2: { label: "Tier 2", color: "text-blue-600",    bg: "bg-blue-50" },
+  TIER_3: { label: "Tier 3", color: "text-amber-600",   bg: "bg-amber-50" },
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
+const quickActions = [
+  { label: "Review KYC",       href: "/admin/students/kyc",  icon: UserCheck,   desc: "Pending verifications" },
+  { label: "Post a Job",       href: "/admin/jobs/new",       icon: Briefcase,   desc: "Create new posting" },
+  { label: "Send Alert",       href: "/admin/notifications",  icon: Radio,       desc: "Notify students" },
+  { label: "Schedule Event",   href: "/admin/schedule",       icon: CalendarDays, desc: "Add drive / test" },
+  { label: "Record Placement", href: "/admin/placements",     icon: CheckCircle2, desc: "Log an offer" },
+  { label: "Export Data",      href: "/admin/backup",         icon: FileText,    desc: "Backup & export" },
+]
 
-const TIER_COLORS: Record<string, string> = {
-  TIER_1: '#22c55e',
-  TIER_2: '#3b82f6',
-  TIER_3: '#f59e0b',
-  DREAM: '#8b5cf6',
-}
-
-const TIER_LABELS: Record<string, string> = {
-  TIER_1: 'Tier 1 (>9 LPA)',
-  TIER_2: 'Tier 2 (5-9 LPA)',
-  TIER_3: 'Tier 3 (<=5 LPA)',
-  DREAM: 'Dream (>10 LPA)',
-}
-
-export function AdminDashboardView({ data }: AdminDashboardViewProps) {
+export function AdminDashboardView({ data }: { data: AdminDashboardData }) {
   const { overview, batchStats, siteSettings, activities, stats, user } = data
 
-  // Format monthly trends data
-  const monthlyData = stats.monthlyTrends.map(item => ({
-    month: new Date(item.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-    students: Number(item.count)
+  const monthlyData = stats.monthlyTrends.map((item) => ({
+    month: new Date(item.month).toLocaleDateString("en-IN", { month: "short" }),
+    students: Number(item.count),
   }))
 
-  // Format branch data for charts
-  const branchData = stats.branchWiseStats
-    .filter(item => item.branch !== null)
-    .map(item => ({
-      branch: item.branch,
-      count: item._count.branch
-    }))
-    .sort((a, b) => b.count - a.count)
-
-  // Calculate completion rate
-  const completionRate = overview.totalStudents > 0
+  const kycRate = overview.totalStudents > 0
     ? Math.round((overview.verifiedStudents / overview.totalStudents) * 100)
     : 0
 
+  const greeting = (() => {
+    const h = new Date().getHours()
+    if (h < 12) return "Good morning"
+    if (h < 17) return "Good afternoon"
+    return "Good evening"
+  })()
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      {/* Header */}
-      <div className="flex h-16 shrink-0 items-center justify-between gap-2 px-4 border-b">
+    <div className="min-h-full bg-zinc-50/50">
+      {/* Top bar */}
+      <div className="bg-white border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user.name}</p>
+          <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">
+            {greeting}, {user.name.split(" ")[0]}
+          </h1>
+          <p className="text-sm text-zinc-500 mt-0.5">{siteSettings.placementSeasonName}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
+          <Badge
+            variant={siteSettings.registrationOpen ? "default" : "secondary"}
+            className={siteSettings.registrationOpen
+              ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+              : "bg-zinc-100 text-zinc-500"
+            }
+          >
+            <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${siteSettings.registrationOpen ? "bg-emerald-500" : "bg-zinc-400"}`} />
+            {siteSettings.registrationOpen ? "Applications Open" : "Applications Closed"}
+          </Badge>
+          <Button size="sm" variant="outline" className="h-8 text-xs" asChild>
             <Link href="/admin/analytics">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              View Analytics
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/kyc-queue">
-              <UserCheck className="h-4 w-4 mr-2" />
-              KYC Queue
+              View Analytics <ArrowRight className="ml-1 h-3 w-3" />
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="container mx-auto max-w-7xl px-4 py-6 space-y-6">
-        {/* Announcement Banner */}
+      <div className="px-6 py-6 space-y-6 max-w-7xl mx-auto">
+
+        {/* Announcement */}
         {siteSettings.announcementActive && siteSettings.announcementText && (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              <p className="text-sm font-medium text-blue-900">
-                {siteSettings.announcementText}
-              </p>
-            </div>
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <p className="text-sm text-amber-800">{siteSettings.announcementText}</p>
           </div>
         )}
 
-        {/* Current Season Stats */}
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
+        {/* Season summary strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            {
+              label: "Placement Rate",
+              value: `${batchStats.placementRate}%`,
+              sub: `${batchStats.batchPlacedStudents} of ${batchStats.batchStudents} students`,
+              accent: "border-l-emerald-500",
+              valueColor: "text-emerald-600",
+            },
+            {
+              label: "Avg Package",
+              value: batchStats.avgPackage > 0 ? `${batchStats.avgPackage.toFixed(1)} LPA` : "—",
+              sub: "Current batch",
+              accent: "border-l-blue-500",
+              valueColor: "text-blue-600",
+            },
+            {
+              label: "Active Jobs",
+              value: String(overview.activeJobPostings),
+              sub: "Open for applications",
+              accent: "border-l-violet-500",
+              valueColor: "text-violet-600",
+            },
+            {
+              label: "Pending KYC",
+              value: String(overview.pendingVerifications),
+              sub: "Awaiting review",
+              accent: overview.pendingVerifications > 0 ? "border-l-amber-500" : "border-l-zinc-300",
+              valueColor: overview.pendingVerifications > 0 ? "text-amber-600" : "text-zinc-600",
+            },
+          ].map((s) => (
+            <div key={s.label} className={`bg-white rounded-xl border border-zinc-100 border-l-4 ${s.accent} px-4 py-4 shadow-sm`}>
+              <p className="text-xs text-zinc-500 font-medium mb-1">{s.label}</p>
+              <p className={`text-2xl font-bold tracking-tight ${s.valueColor}`}>{s.value}</p>
+              <p className="text-xs text-zinc-400 mt-0.5">{s.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Tier breakdown */}
+        {batchStats.tierDistribution.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {batchStats.tierDistribution.map((t) => {
+              const cfg = TIER_CONFIG[t.tier]
+              if (!cfg) return null
+              return (
+                <span
+                  key={t.tier}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${cfg.bg} ${cfg.color}`}
+                >
+                  {cfg.label} — {t.count} placed
+                </span>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Main content: chart + activity */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Chart */}
+          <div className="lg:col-span-2 bg-white rounded-xl border border-zinc-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <CardTitle>{siteSettings.placementSeasonName}</CardTitle>
-                <CardDescription>Batch: {siteSettings.activeBatch} {!siteSettings.registrationOpen && " | Registration Closed"}</CardDescription>
+                <h3 className="text-sm font-semibold text-zinc-800">Student Registrations</h3>
+                <p className="text-xs text-zinc-400 mt-0.5">Last 6 months</p>
               </div>
-              <Badge variant={siteSettings.registrationOpen ? "default" : "secondary"}>
-                {siteSettings.registrationOpen ? "Registration Open" : "Registration Closed"}
-              </Badge>
+              <span className="text-2xl font-bold text-zinc-900">{overview.totalStudents}</span>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Batch Students</p>
-                <p className="text-2xl font-bold">{batchStats.batchStudents}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Placed</p>
-                <p className="text-2xl font-bold">{batchStats.batchPlacedStudents}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Avg Package</p>
-                <p className="text-2xl font-bold">{batchStats.avgPackage > 0 ? `${batchStats.avgPackage.toFixed(2)} LPA` : "N/A"}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Placement Rate</p>
-                <p className="text-2xl font-bold">{batchStats.placementRate}%</p>
-              </div>
-            </div>
-            {batchStats.tierDistribution.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {batchStats.tierDistribution.map((t) => (
-                  <Badge
-                    key={t.tier}
-                    variant="outline"
-                    style={{ borderColor: TIER_COLORS[t.tier] || '#6b7280' }}
-                  >
-                    {TIER_LABELS[t.tier] || t.tier}: {t.count}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* All-Time Metrics */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.totalStudents}</div>
-              <p className="text-xs text-muted-foreground">
-                Registered in the system
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Verified Students</CardTitle>
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.verifiedStudents}</div>
-              <p className="text-xs text-muted-foreground">
-                KYC verified profiles
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Verifications</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.pendingVerifications}</div>
-              <p className="text-xs text-muted-foreground">
-                Awaiting KYC review
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.activeJobPostings}</div>
-              <p className="text-xs text-muted-foreground">
-                Open job postings
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Secondary Metrics */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recruiters</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.totalRecruiters}</div>
-              <p className="text-xs text-muted-foreground">
-                Registered companies
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Applications</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.totalApplications}</div>
-              <p className="text-xs text-muted-foreground">
-                Total job applications
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Placed Students</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.placedStudents}</div>
-              <p className="text-xs text-muted-foreground">
-                Successfully placed
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overview.upcomingInterviews}</div>
-              <p className="text-xs text-muted-foreground">
-                Next 7 days
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts and Activity Section */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Monthly Trends Chart */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Student Registration Trends</CardTitle>
-              <CardDescription>Monthly student registrations over the last 6 months</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="students"
-                    stroke="#8884d8"
-                    fill="#8884d8"
-                    fillOpacity={0.3}
+            {monthlyData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.12} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#a1a1aa" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#a1a1aa" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
+                    cursor={{ stroke: "#2563eb", strokeWidth: 1, strokeDasharray: "4 2" }}
                   />
+                  <Area type="monotone" dataKey="students" stroke="#2563eb" strokeWidth={2} fill="url(#grad)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-sm text-zinc-400">No data yet</div>
+            )}
 
-          {/* Recent Activities */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activities</CardTitle>
-              <CardDescription>Latest profile updates and verifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {activities.slice(0, 6).map((activity) => (
-                <div key={activity.id} className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    {activity.kycStatus === 'VERIFIED' ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : activity.kycStatus === 'PENDING' ? (
-                      <Clock className="h-4 w-4 text-yellow-600" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">
-                      {activity.firstName && activity.lastName
-                        ? `${activity.firstName} ${activity.lastName}`
-                        : activity.user.name || 'Anonymous User'
-                      }
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Profile updated • {new Date(activity.updatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Badge
-                    variant={activity.kycStatus === 'VERIFIED' ? 'default' : 'secondary'}
-                    className="text-xs"
-                  >
-                    {activity.kycStatus}
-                  </Badge>
+            {/* Mini stats row */}
+            <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-zinc-50">
+              {[
+                { label: "Total Students", value: overview.totalStudents },
+                { label: "Applications", value: overview.totalApplications },
+                { label: "Placed", value: overview.placedStudents },
+              ].map((s) => (
+                <div key={s.label}>
+                  <p className="text-lg font-bold text-zinc-900">{s.value}</p>
+                  <p className="text-xs text-zinc-400">{s.label}</p>
                 </div>
               ))}
-              <Separator />
-              <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href="/admin/students">
-                  <Eye className="h-4 w-4" />
-                  View All Students
+            </div>
+          </div>
+
+          {/* Activity feed */}
+          <div className="bg-white rounded-xl border border-zinc-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-zinc-800">Recent Activity</h3>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-400 px-2" asChild>
+                <Link href="/admin/students">View all</Link>
+              </Button>
+            </div>
+
+            {/* KYC progress */}
+            <div className="mb-4 pb-4 border-b border-zinc-50">
+              <div className="flex justify-between text-xs text-zinc-500 mb-1.5">
+                <span>KYC verified</span>
+                <span className="font-medium text-zinc-700">{overview.verifiedStudents} / {overview.totalStudents}</span>
+              </div>
+              <Progress value={kycRate} className="h-1.5 bg-zinc-100" />
+              <p className="text-xs text-zinc-400 mt-1">{kycRate}% of students verified</p>
+            </div>
+
+            <div className="space-y-3">
+              {activities.slice(0, 6).map((a) => {
+                const name = a.firstName && a.lastName
+                  ? `${a.firstName} ${a.lastName}`
+                  : a.user.name || "Student"
+                const initials = name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+                const statusColor =
+                  a.kycStatus === "VERIFIED" ? "text-emerald-600 bg-emerald-50"
+                  : a.kycStatus === "PENDING" ? "text-amber-600 bg-amber-50"
+                  : "text-red-500 bg-red-50"
+                return (
+                  <div key={a.id} className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-semibold text-zinc-600 shrink-0">
+                      {initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-zinc-800 truncate font-medium leading-tight">{name}</p>
+                      <p className="text-xs text-zinc-400 leading-tight">
+                        {new Date(a.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0 ${statusColor}`}>
+                      {a.kycStatus === "VERIFIED" ? "OK" : a.kycStatus === "PENDING" ? "Pending" : "Rejected"}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {overview.pendingVerifications > 0 && (
+              <Button className="w-full mt-4 h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white" asChild>
+                <Link href="/admin/students/kyc">
+                  <Clock className="h-3.5 w-3.5 mr-1.5" />
+                  {overview.pendingVerifications} pending — Review now
                 </Link>
               </Button>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </div>
 
-        {/* Branch Distribution and System Status */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Branch Distribution */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Branch Distribution</CardTitle>
-              <CardDescription>Student distribution across engineering branches</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={branchData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="branch" type="category" width={60} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* System Status and Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>System Status</CardTitle>
-              <CardDescription>Current system health and quick actions</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Profile Completion Rate</span>
-                  <span className="font-medium">{completionRate}%</span>
+        {/* Quick actions */}
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">Quick Actions</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {quickActions.map((action) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="group bg-white rounded-xl border border-zinc-100 shadow-sm p-4 hover:border-zinc-300 hover:shadow-md transition-all duration-150 flex flex-col gap-2"
+              >
+                <div className="h-8 w-8 rounded-lg bg-zinc-50 group-hover:bg-zinc-100 flex items-center justify-center transition-colors">
+                  <action.icon className="h-4 w-4 text-zinc-600" />
                 </div>
-                <Progress value={completionRate} className="h-2" />
-              </div>
-
-              <Separator />
-
-              <div className="grid gap-2">
-                <Button variant="outline" size="sm" className="justify-start" asChild>
-                  <Link href="/admin/kyc-queue">
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    Review KYC Submissions
-                  </Link>
-                </Button>
-
-                <Button variant="outline" size="sm" className="justify-start" asChild>
-                  <Link href="/admin/notifications">
-                    <Bell className="h-4 w-4 mr-2" />
-                    Send Notifications
-                  </Link>
-                </Button>
-
-                <Button variant="outline" size="sm" className="justify-start" asChild>
-                  <Link href="/admin/schedule">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Events
-                  </Link>
-                </Button>
-
-                <Button variant="outline" size="sm" className="justify-start" asChild>
-                  <Link href="/admin/analytics">
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    View Detailed Analytics
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div>
+                  <p className="text-sm font-medium text-zinc-800 leading-tight">{action.label}</p>
+                  <p className="text-xs text-zinc-400 leading-tight mt-0.5">{action.desc}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
+
+        {/* Upcoming events note */}
+        {overview.upcomingInterviews > 0 && (
+          <Link href="/admin/schedule" className="flex items-center justify-between bg-white rounded-xl border border-zinc-100 shadow-sm px-5 py-4 hover:border-zinc-200 transition-colors group">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                <CalendarDays className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-800">
+                  {overview.upcomingInterviews} event{overview.upcomingInterviews !== 1 ? "s" : ""} in the next 7 days
+                </p>
+                <p className="text-xs text-zinc-400">Placement drives, interviews & tests</p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
+          </Link>
+        )}
       </div>
     </div>
   )

@@ -73,12 +73,10 @@ export async function PUT(request: NextRequest) {
         where: { id: SETTINGS_ID },
         create: {
           id: SETTINGS_ID,
-          activeAdmissionYears: parsed.data.activeAdmissionYears,
           collegeCode: parsed.data.collegeCode,
           updatedBy: session.user.id,
         },
         update: {
-          activeAdmissionYears: parsed.data.activeAdmissionYears,
           collegeCode: parsed.data.collegeCode,
           updatedBy: session.user.id,
         },

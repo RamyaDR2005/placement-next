@@ -14,7 +14,6 @@ let siteSettingsCache: CacheEntry<SiteSettings> | null = null
 
 const ADMIN_SETTINGS_FALLBACK: AdminSettings = {
   id: SETTINGS_ID,
-  activeAdmissionYears: ["22"],
   collegeCode: "2SD",
   maxActiveBatches: 2,
   updatedAt: new Date(0),

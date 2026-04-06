@@ -13,9 +13,7 @@ export default async function AdminAttendancePage() {
     where: { id: session.user.id },
     select: { role: true },
   })
-  if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
-    redirect("/dashboard")
-  }
+  if (!user || user.role !== "ADMIN") redirect("/dashboard")
 
   // Jobs that have active/shortlisted applicants
   const jobs = await prisma.job.findMany({

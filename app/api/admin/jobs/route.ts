@@ -81,9 +81,6 @@ export async function GET(request: NextRequest) {
                 skip,
                 take: limit,
                 include: {
-                    company: {
-                        select: { id: true, name: true, logo: true }
-                    },
                     _count: {
                         select: {
                             applications: {
@@ -151,7 +148,6 @@ export async function POST(request: NextRequest) {
         // Sanitize inputs
         const sanitizedData = {
             title: sanitizeInput(data.title),
-            companyId: data.companyId || null,
             companyName: sanitizeInput(data.companyName),
             companyLogo: data.companyLogo ? sanitizeInput(data.companyLogo) : null,
             description: data.description, // HTML content
@@ -255,7 +251,6 @@ export async function PUT(request: NextRequest) {
         const sanitizedData: Prisma.JobUncheckedUpdateInput = {}
 
         if (updateData.title) sanitizedData.title = sanitizeInput(updateData.title)
-        if (updateData.companyId !== undefined) sanitizedData.companyId = updateData.companyId
         if (updateData.companyName) sanitizedData.companyName = sanitizeInput(updateData.companyName)
         if (updateData.companyLogo !== undefined) sanitizedData.companyLogo = updateData.companyLogo ? sanitizeInput(updateData.companyLogo) : null
         if (updateData.description) sanitizedData.description = updateData.description

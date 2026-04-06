@@ -356,7 +356,6 @@ model Profile {
 
 enum UserRole {
   STUDENT
-  RECRUITER
   ADMIN
 }
 
@@ -519,9 +518,7 @@ enum AttendeeStatus {
 model Job {
   id          String   @id @default(cuid())
   title       String
-  companyId   String?  @map("company_id")
-  company     Company? @relation(fields: [companyId], references: [id])
-  companyName String   @map("company_name") // Fallback if no company relation
+  companyName String   @map("company_name")
   companyLogo String?  @map("company_logo")
   description String   @db.Text
   location    String
@@ -682,24 +679,6 @@ model Attendance {
   @@map("attendances")
 }
 
-// Company Management
-model Company {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  logo        String?
-  website     String?
-  industry    String?
-  description String? @db.Text
-  isActive    Boolean @default(true) @map("is_active")
-
-  jobs Job[]
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("companies")
-}
-
 // Placement Records - Tracks which tier a student is placed in
 model Placement {
   id            String        @id @default(cuid())
@@ -768,12 +747,11 @@ model DeadlineReminder {
 
 // Admin Settings - Singleton (always use id: "default")
 model AdminSettings {
-  id                   String   @id @default("default")
-  activeAdmissionYears String[] @default(["22"]) @map("active_admission_years")
-  collegeCode          String   @default("2SD") @map("college_code")
-  maxActiveBatches     Int      @default(2) @map("max_active_batches")
-  updatedAt            DateTime @updatedAt @map("updated_at")
-  updatedBy            String?  @map("updated_by")
+  id               String   @id @default("default")
+  collegeCode      String   @default("2SD") @map("college_code")
+  maxActiveBatches Int      @default(2) @map("max_active_batches")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  updatedBy        String?  @map("updated_by")
 
   @@map("admin_settings")
 }

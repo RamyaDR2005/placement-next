@@ -1,8 +1,6 @@
 export const dynamic = "force-dynamic"
 
 import { prisma } from "@/lib/prisma"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
@@ -98,71 +96,49 @@ export default async function CompanyAnalyticsPage({
     .sort((a, b) => b.totalApplications - a.totalApplications)
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex h-16 shrink-0 items-center gap-2 px-4 border-b">
+    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center gap-3">
         <Link href="/admin/analytics">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Analytics
+          <Button variant="ghost" size="sm" className="gap-1.5 text-zinc-500 hover:text-[#18181B] h-8 text-xs">
+            <ArrowLeft className="h-3.5 w-3.5" /> Analytics
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">Company-wise Analysis</h1>
-      </div>
-
-      <div className="container mx-auto max-w-7xl px-4 py-6 space-y-6">
-        {/* Batch Filter */}
-        {activeBatches.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-muted-foreground">Filter by batch:</span>
-            <Link href="/admin/analytics/companies">
-              <Badge variant={!batchId ? "default" : "outline"} className="cursor-pointer">All</Badge>
-            </Link>
-            {activeBatches.map((b) => (
-              <Link key={b.id} href={`/admin/analytics/companies?batchId=${b.id}`}>
-                <Badge variant={batchId === b.id ? "default" : "outline"} className="cursor-pointer">{b.name}</Badge>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Summary cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Companies</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{companies.length}</div>
-              <p className="text-xs text-muted-foreground">Unique hiring partners</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {companies.reduce((a, c) => a + c.totalApplications, 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">Across all companies</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Selections</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {companies.reduce((a, c) => a + c.selected, 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">Offers made</p>
-            </CardContent>
-          </Card>
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">Company-wise Analysis</h1>
         </div>
-
-        {/* Interactive table with per-company drawer */}
-        <CompanyAnalyticsTable companies={companies} batchId={batchId} />
       </div>
+
+      {/* Batch Filter */}
+      {activeBatches.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-zinc-500 font-medium uppercase tracking-wide">Batch:</span>
+          <Link href="/admin/analytics/companies">
+            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${!batchId ? "bg-[#18181B] text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}>All</span>
+          </Link>
+          {activeBatches.map((b) => (
+            <Link key={b.id} href={`/admin/analytics/companies?batchId=${b.id}`}>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${batchId === b.id ? "bg-[#18181B] text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}>{b.name}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Summary cards */}
+      <div className="grid gap-3 md:grid-cols-3">
+        {[
+          { label: "Companies", value: companies.length, sub: "Unique hiring partners" },
+          { label: "Total Applications", value: companies.reduce((a, c) => a + c.totalApplications, 0), sub: "Across all companies" },
+          { label: "Total Selections", value: companies.reduce((a, c) => a + c.selected, 0), sub: "Offers made" },
+        ].map(({ label, value, sub }) => (
+          <div key={label} className="rounded-xl border border-[#E8E5E1] bg-white px-4 py-4">
+            <p className="text-xs text-zinc-500 font-medium">{label}</p>
+            <p className="text-2xl font-bold tracking-tight text-[#18181B] mt-1">{value}</p>
+            <p className="text-xs text-zinc-400">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      <CompanyAnalyticsTable companies={companies} batchId={batchId} />
     </div>
   )
 }

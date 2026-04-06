@@ -7,18 +7,20 @@ import {
   Users,
   Calendar,
   Bell,
-  BarChart3,
+  BarChart2,
   Shield,
-  Building,
   Briefcase,
   LogOut,
   Download,
   Settings,
   ScanLine,
   GraduationCap,
+  LayoutDashboard,
+  UserCheck,
+  TrendingUp,
+  ChevronLeft,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
-
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
@@ -31,133 +33,133 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-// Only include routes that actually exist
-const navigationItems = [
+const navGroups = [
   {
-    title: "Dashboard",
-    url: "/admin/dashboard",
-    icon: BarChart3,
+    label: "Overview",
+    items: [
+      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
+      { title: "Analytics", url: "/admin/analytics", icon: BarChart2 },
+    ],
   },
   {
-    title: "Students",
-    url: "/admin/students",
-    icon: Users,
+    label: "Students",
+    items: [
+      { title: "All Students", url: "/admin/students", icon: Users },
+      { title: "KYC Queue", url: "/admin/students/kyc", icon: UserCheck },
+      { title: "Batches", url: "/admin/batches", icon: GraduationCap },
+    ],
   },
   {
-    title: "Jobs",
-    url: "/admin/jobs",
-    icon: Briefcase,
+    label: "Recruitment",
+    items: [
+      { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
+      { title: "Placements", url: "/admin/placements", icon: TrendingUp },
+      { title: "Company Analysis", url: "/admin/analytics/companies", icon: BarChart2 },
+    ],
   },
   {
-    title: "Companies",
-    url: "/admin/companies",
-    icon: Building,
+    label: "Operations",
+    items: [
+      { title: "Attendance", url: "/admin/attendance", icon: ScanLine },
+      { title: "Schedule", url: "/admin/schedule", icon: Calendar },
+      { title: "Notifications", url: "/admin/notifications", icon: Bell },
+    ],
   },
   {
-    title: "Attendance",
-    url: "/admin/attendance",
-    icon: ScanLine,
-  },
-  {
-    title: "Schedule",
-    url: "/admin/schedule",
-    icon: Calendar,
-  },
-  {
-    title: "Notifications",
-    url: "/admin/notifications",
-    icon: Bell,
-  },
-  {
-    title: "Batches",
-    url: "/admin/batches",
-    icon: GraduationCap,
-  },
-  {
-    title: "Analytics",
-    url: "/admin/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Backup",
-    url: "/admin/backup",
-    icon: Download,
-  },
-  {
-    title: "Settings",
-    url: "/admin/settings",
-    icon: Settings,
+    label: "System",
+    items: [
+      { title: "Backup", url: "/admin/backup", icon: Download },
+      { title: "Settings", url: "/admin/settings", icon: Settings },
+    ],
   },
 ]
 
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              asChild
-            >
-              <Link href="/admin/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Shield className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    Admin Panel
-                  </span>
-                  <span className="truncate text-xs">
-                    Placement Portal
-                  </span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar collapsible="icon" {...props} className="border-r-0">
+      {/* Header */}
+      <SidebarHeader className="bg-zinc-950 px-3 py-4">
+        <div className="flex items-center justify-between">
+          <Link href="/admin/dashboard" className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white">
+              <Shield className="h-4 w-4 text-zinc-950" />
+            </div>
+            {!isCollapsed && (
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white leading-tight truncate">CampusConnect</p>
+                <p className="text-xs text-zinc-500 leading-tight truncate">Admin Panel</p>
+              </div>
+            )}
+          </Link>
+          {!isCollapsed && (
+            <SidebarTrigger className="text-zinc-500 hover:text-white hover:bg-zinc-800 h-7 w-7 rounded-md shrink-0" />
+          )}
+        </div>
+        {isCollapsed && (
+          <div className="mt-2 flex justify-center">
+            <SidebarTrigger className="text-zinc-500 hover:text-white hover:bg-zinc-800 h-7 w-7 rounded-md" />
+          </div>
+        )}
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.title}
-                    isActive={pathname === item.url || pathname?.startsWith(item.url + "/")}
-                  >
-                    <Link href={item.url}>
-                      {item.icon && <item.icon className="size-4" />}
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      {/* Nav */}
+      <SidebarContent className="bg-zinc-950 px-2 py-2 gap-0">
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.label} className="py-1 px-0">
+            {!isCollapsed && (
+              <SidebarGroupLabel className="text-zinc-600 text-[10px] uppercase tracking-widest font-semibold px-2 pb-1 pt-2">
+                {group.label}
+              </SidebarGroupLabel>
+            )}
+            {isCollapsed && <div className="h-2" />}
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.url || pathname?.startsWith(item.url + "/")
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.title}
+                        isActive={isActive}
+                        className={cn(
+                          "h-8 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors",
+                          isActive && "bg-zinc-800 text-white font-medium"
+                        )}
+                      >
+                        <Link href={item.url} className="flex items-center gap-2.5">
+                          <item.icon className={cn("shrink-0", isCollapsed ? "h-4 w-4" : "h-4 w-4")} />
+                          {!isCollapsed && <span className="text-sm">{item.title}</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
-      <SidebarFooter>
+      {/* Footer */}
+      <SidebarFooter className="bg-zinc-950 border-t border-zinc-800 px-2 py-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              size="lg"
+              tooltip="Sign Out"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="h-8 rounded-md text-zinc-500 hover:text-red-400 hover:bg-zinc-800 transition-colors"
             >
-              <LogOut className="size-4" />
-              <span>Sign Out</span>
+              <LogOut className="h-4 w-4 shrink-0" />
+              {!isCollapsed && <span className="text-sm">Sign Out</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

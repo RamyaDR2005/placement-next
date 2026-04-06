@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
@@ -131,416 +133,313 @@ export default async function DashboardPage() {
   const hasProfile = !!user.profile
   const isKycVerified = user.profile?.kycStatus === 'VERIFIED'
 
+  const greeting = (() => {
+    const h = new Date().getHours()
+    if (h < 12) return "Good morning"
+    if (h < 17) return "Good afternoon"
+    return "Good evening"
+  })()
+
+  const statusLabel: Record<string, string> = {
+    APPLIED: "Applied", SHORTLISTED: "Shortlisted",
+    INTERVIEW_SCHEDULED: "Interview Scheduled", INTERVIEWED: "Interviewed",
+    SELECTED: "Selected", OFFER_ACCEPTED: "Offer Accepted",
+    OFFER_REJECTED: "Offer Rejected", REJECTED: "Not Selected",
+  }
+
   return (
-    <main className="flex-1 bg-white min-h-screen">
-      <div className="container mx-auto max-w-7xl px-4 py-6 space-y-6">
-        {/* Welcome Header */}
-        <div className="rounded-lg border border-neutral-200 bg-white p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <main className="flex-1 bg-[#FAFAF9] min-h-screen">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 space-y-6">
+
+        {/* ── Welcome header ── */}
+        <div className="rounded-2xl border border-[#E8E5E1] bg-white px-6 py-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-xl font-semibold tracking-tight">
-                Welcome back, {session.user.name?.split(' ')[0]}
+              <p className="text-xs font-medium text-[#A1A1AA] uppercase tracking-widest mb-1">
+                {siteSettings.placementSeasonName}
+              </p>
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">
+                {greeting}, {session.user.name?.split(" ")[0]}
               </h1>
-              <p className="text-sm text-neutral-500 mt-0.5">
+              <p className="mt-1 text-sm text-[#71717A]">
                 {isAdmin
                   ? "Manage placements and track student progress"
                   : "Track your placement journey and explore new opportunities"}
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {!isAdmin && (
                 <>
                   <Link href="/profile">
-                    <Button size="sm" variant="outline">Update Profile</Button>
+                    <Button size="sm" variant="outline" className="h-8 border-[#E8E5E1] text-xs text-[#52525B] hover:bg-[#F4F0EB]">
+                      Update Profile
+                    </Button>
                   </Link>
                   {isKycVerified && (
                     <Link href="/documents">
-                      <Button size="sm" variant="outline">Download ID Card</Button>
+                      <Button size="sm" variant="outline" className="h-8 border-[#E8E5E1] text-xs text-[#52525B] hover:bg-[#F4F0EB]">
+                        ID Card
+                      </Button>
                     </Link>
                   )}
                   <Link href="/jobs">
-                    <Button size="sm">Browse Jobs</Button>
+                    <Button size="sm" className="h-8 bg-[#18181B] hover:bg-[#27272A] text-white text-xs">
+                      Browse Jobs
+                    </Button>
                   </Link>
                 </>
               )}
               {isAdmin && (
-                <Link href="/admin">
-                  <Button size="sm">Admin Dashboard</Button>
+                <Link href="/admin/dashboard">
+                  <Button size="sm" className="h-8 bg-[#18181B] hover:bg-[#27272A] text-white text-xs">
+                    Admin Dashboard
+                  </Button>
                 </Link>
               )}
             </div>
           </div>
         </div>
 
-        {/* Announcement Banner */}
+        {/* ── Announcement ── */}
         {siteSettings.announcementActive && siteSettings.announcementText && (
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900">
-                    {siteSettings.placementSeasonName}
-                  </h3>
-                  <p className="text-sm text-blue-800 mt-1">
-                    {siteSettings.announcementText}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+            <div>
+              <p className="text-sm font-medium text-blue-900">{siteSettings.announcementText}</p>
+            </div>
+          </div>
         )}
 
-        {/* KYC Status Alert for students */}
+        {/* ── Status banners ── */}
         {!isAdmin && !hasProfile && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold text-red-900">
-                    Profile Setup Required
-                  </h3>
-                  <p className="text-sm text-red-800 mt-1">
-                    Please complete your profile to access placement opportunities.
-                  </p>
-                </div>
-                <Link href="/profile">
-                  <Button size="sm">
-                    Create Profile
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-red-900">Profile setup required</p>
+              <p className="text-xs text-red-700 mt-0.5">Complete your profile to access placement opportunities.</p>
+            </div>
+            <Link href="/profile">
+              <Button size="sm" className="h-8 shrink-0 bg-red-600 hover:bg-red-700 text-white text-xs">
+                Set up now
+              </Button>
+            </Link>
+          </div>
         )}
 
-        {!isAdmin && hasProfile && user.profile?.kycStatus === 'PENDING' && (
-          <Card className="border-yellow-200 bg-yellow-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-900">
-                    KYC Verification Pending
-                  </h3>
-                  <p className="text-sm text-yellow-800 mt-1">
-                    Your account is under review. Please upload your College ID card for verification.
-                  </p>
-                </div>
-                <Link href="/profile">
-                  <Button size="sm" variant="outline">
-                    Upload Documents
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+        {!isAdmin && hasProfile && user.profile?.kycStatus === "PENDING" && (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-amber-900">KYC verification pending</p>
+              <p className="text-xs text-amber-700 mt-0.5">Upload your College ID card to complete verification.</p>
+            </div>
+            <Link href="/profile">
+              <Button size="sm" variant="outline" className="h-8 shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100 text-xs">
+                Upload docs
+              </Button>
+            </Link>
+          </div>
         )}
 
-        {!isAdmin && hasProfile && user.profile?.kycStatus === 'UNDER_REVIEW' && (
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900">
-                    KYC Verification In Progress
-                  </h3>
-                  <p className="text-sm text-blue-800 mt-1">
-                    Your documents are being verified by the admin. You'll be notified once approved.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {!isAdmin && hasProfile && user.profile?.kycStatus === "UNDER_REVIEW" && (
+          <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-400 animate-pulse" />
+            <p className="text-sm text-blue-800">
+              <span className="font-semibold text-blue-900">Verification in progress — </span>
+              Your documents are being reviewed. You&apos;ll be notified once approved.
+            </p>
+          </div>
         )}
 
         {!isAdmin && profileCompletionScore < 100 && isKycVerified && (
-          <Card className="border-yellow-200 bg-yellow-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-900">
-                    Complete Your Profile
-                  </h3>
-                  <p className="text-sm text-yellow-800 mt-1">
-                    Your profile is {profileCompletionScore}% complete. Complete it to apply for jobs.
-                  </p>
-                  <Progress value={profileCompletionScore} className="mt-3 h-2" />
-                </div>
-                <Link href="/profile">
-                  <Button size="sm" variant="outline">
-                    Complete Now
-                  </Button>
-                </Link>
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-900">
+                Profile {profileCompletionScore}% complete
+              </p>
+              <div className="mt-1.5 h-1.5 w-full rounded-full bg-amber-200">
+                <div
+                  className="h-1.5 rounded-full bg-amber-500 transition-all"
+                  style={{ width: `${profileCompletionScore}%` }}
+                />
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Stats Grid */}
-        {isAdmin ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalStudents}</div>
-                <p className="text-xs text-muted-foreground">
-                  {verifiedProfiles} verified
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeJobs}</div>
-                <p className="text-xs text-muted-foreground">
-                  {totalJobs} total posted
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{upcomingEvents}</div>
-                <p className="text-xs text-muted-foreground">
-                  Scheduled
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Pending KYC</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {(totalStudents || 0) - (verifiedProfiles || 0)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Need verification
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeJobs}</div>
-                <p className="text-xs text-muted-foreground">
-                  Available to apply
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">My Applications</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{myApplications || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total applications
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{upcomingEvents}</div>
-                <p className="text-xs text-muted-foreground">
-                  Scheduled
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Profile Score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{profileCompletionScore}%</div>
-                <p className="text-xs text-muted-foreground">
-                  Completion
-                </p>
-              </CardContent>
-            </Card>
+            </div>
+            <Link href="/profile">
+              <Button size="sm" variant="outline" className="h-8 shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100 text-xs">
+                Complete
+              </Button>
+            </Link>
           </div>
         )}
 
-        {/* Placement Journey — students only */}
-        {!isAdmin && placementJourney.length > 0 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Placement Journey</CardTitle>
-                  <CardDescription>Your progress at each company — rounds attended and current status</CardDescription>
+        {/* ── Stats strip ── */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {!isAdmin ? (
+            <>
+              {[
+                { label: "Open Jobs",      value: activeJobs,             sub: "available now",         accent: "border-l-blue-400" },
+                { label: "Applications",   value: myApplications ?? 0,    sub: "submitted",             accent: "border-l-violet-400" },
+                { label: "Events",         value: upcomingEvents,         sub: "upcoming",              accent: "border-l-amber-400" },
+                { label: "Profile Score",  value: `${profileCompletionScore}%`, sub: "completion",     accent: "border-l-emerald-400" },
+              ].map((s) => (
+                <div key={s.label} className={`rounded-xl border border-[#E8E5E1] border-l-4 ${s.accent} bg-white px-4 py-4`}>
+                  <p className="font-display text-2xl font-bold text-[#18181B]">{s.value}</p>
+                  <p className="mt-0.5 text-xs font-medium text-[#71717A]">{s.label}</p>
+                  <p className="text-[11px] text-[#A1A1AA]">{s.sub}</p>
                 </div>
-                <Link href="/attendance">
-                  <Button variant="ghost" size="sm">My QR Codes</Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {placementJourney.map((app: any) => {
-                  const attended = app.attendance.filter((a: any) => a.scannedAt)
-                  const pending = app.attendance.filter((a: any) => !a.scannedAt)
-                  const isRejected = app.status === 'REJECTED' || app.status === 'OFFER_REJECTED'
-                  const isPlaced = app.status === 'SELECTED' || app.status === 'OFFER_ACCEPTED'
-                  const statusColor = isPlaced
-                    ? 'bg-green-100 text-green-800 border-green-200'
-                    : isRejected
-                    ? 'bg-red-100 text-red-800 border-red-200'
-                    : 'bg-blue-100 text-blue-800 border-blue-200'
-                  const statusLabel: Record<string, string> = {
-                    APPLIED: 'Applied',
-                    SHORTLISTED: 'Shortlisted',
-                    INTERVIEW_SCHEDULED: 'Interview Scheduled',
-                    INTERVIEWED: 'Interviewed',
-                    SELECTED: 'Selected ✓',
-                    OFFER_ACCEPTED: 'Offer Accepted ✓',
-                    OFFER_REJECTED: 'Offer Rejected',
-                    REJECTED: 'Not Selected',
-                  }
-                  return (
-                    <div key={app.id} className="rounded-lg border p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold">{app.job.companyName}</p>
-                          <p className="text-xs text-muted-foreground">{app.job.title} · {app.job.salary} LPA</p>
-                        </div>
-                        <Badge className={`${statusColor} border text-xs shrink-0`}>
-                          {statusLabel[app.status] ?? app.status}
-                        </Badge>
-                      </div>
-                      {app.attendance.length > 0 && (
-                        <div className="space-y-1.5">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Rounds</p>
-                          <div className="flex flex-wrap gap-2">
-                            {app.attendance.map((a: any, i: number) => (
-                              <span
-                                key={i}
-                                className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${
-                                  a.scannedAt
-                                    ? 'bg-green-50 border-green-200 text-green-700'
-                                    : 'bg-neutral-50 border-neutral-200 text-neutral-500'
-                                }`}
-                              >
-                                {a.scannedAt ? '✓' : '○'} {a.round ?? 'Round'}
-                              </span>
-                            ))}
-                          </div>
-                          {isRejected && attended.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              Attended {attended.length} round{attended.length > 1 ? 's' : ''} — not selected after{' '}
-                              <span className="font-medium">{attended[attended.length - 1]?.round ?? 'final round'}</span>
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Quick Actions */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Recent Job Openings</CardTitle>
-                  <CardDescription>Latest opportunities posted</CardDescription>
+              ))}
+            </>
+          ) : (
+            <>
+              {[
+                { label: "Students",      value: totalStudents ?? 0,                        sub: `${verifiedProfiles} verified`,        accent: "border-l-blue-400" },
+                { label: "Active Jobs",   value: activeJobs,                                sub: `${totalJobs} total`,                  accent: "border-l-emerald-400" },
+                { label: "Events",        value: upcomingEvents,                            sub: "upcoming",                            accent: "border-l-amber-400" },
+                { label: "Pending KYC",   value: (totalStudents ?? 0) - (verifiedProfiles ?? 0), sub: "awaiting review",               accent: "border-l-red-400" },
+              ].map((s) => (
+                <div key={s.label} className={`rounded-xl border border-[#E8E5E1] border-l-4 ${s.accent} bg-white px-4 py-4`}>
+                  <p className="font-display text-2xl font-bold text-[#18181B]">{s.value}</p>
+                  <p className="mt-0.5 text-xs font-medium text-[#71717A]">{s.label}</p>
+                  <p className="text-[11px] text-[#A1A1AA]">{s.sub}</p>
                 </div>
-                <Link href="/jobs">
-                  <Button variant="ghost" size="sm">View All</Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {recentJobs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No active jobs at the moment</p>
-                  <p className="text-xs mt-1">Check back later for new opportunities</p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {recentJobs.map((job) => (
-                    <Link key={job.id} href={`/jobs/${job.id}`} className="flex items-center justify-between py-3 hover:bg-muted/40 px-1 rounded transition-colors">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{job.title}</p>
-                        <p className="text-xs text-muted-foreground">{job.companyName} · {job.salary} LPA</p>
-                      </div>
-                      {job.deadline && (
-                        <span className="text-xs text-muted-foreground ml-3 shrink-0">
-                          Due {format(new Date(job.deadline), "MMM d")}
-                        </span>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Upcoming Events</CardTitle>
-                  <CardDescription>Scheduled interviews and sessions</CardDescription>
-                </div>
-                <Link href="/schedule">
-                  <Button variant="ghost" size="sm">View All</Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {upcomingEventsList.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No upcoming events</p>
-                  <p className="text-xs mt-1">Events will appear here when scheduled</p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {upcomingEventsList.map((event) => (
-                    <div key={event.id} className="flex items-center justify-between py-3 px-1">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">{event.location ?? event.type}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground ml-3 shrink-0">
-                        {format(new Date(event.date), "MMM d, h:mm a")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              ))}
+            </>
+          )}
         </div>
+
+        {/* ── Placement journey (students only) ── */}
+        {!isAdmin && placementJourney.length > 0 && (
+          <div className="rounded-2xl border border-[#E8E5E1] bg-white">
+            <div className="flex items-center justify-between border-b border-[#F4F0EB] px-5 py-4">
+              <div>
+                <h2 className="text-sm font-semibold text-[#18181B]">Placement Journey</h2>
+                <p className="text-xs text-[#A1A1AA]">Your progress at each company</p>
+              </div>
+              <Link href="/attendance" className="text-xs text-[#71717A] hover:text-[#18181B] transition-colors">
+                My QR Codes →
+              </Link>
+            </div>
+            <div className="divide-y divide-[#F4F0EB]">
+              {placementJourney.map((app: any) => {
+                const isPlaced = app.status === "SELECTED" || app.status === "OFFER_ACCEPTED"
+                const isRejected = app.status === "REJECTED" || app.status === "OFFER_REJECTED"
+                const attended = app.attendance.filter((a: any) => a.scannedAt)
+                return (
+                  <div key={app.id} className="flex items-start gap-4 px-5 py-4">
+                    <div
+                      className="mt-0.5 h-2 w-2 shrink-0 rounded-full"
+                      style={{
+                        background: isPlaced ? "#10b981" : isRejected ? "#ef4444" : "#f59e0b"
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-[#18181B]">{app.job.companyName}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          isPlaced ? "bg-emerald-50 text-emerald-700"
+                          : isRejected ? "bg-red-50 text-red-700"
+                          : "bg-amber-50 text-amber-700"
+                        }`}>
+                          {statusLabel[app.status] ?? app.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#A1A1AA] mt-0.5">{app.job.title}</p>
+                      {app.attendance.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {app.attendance.map((a: any, i: number) => (
+                            <span key={i} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium border ${
+                              a.scannedAt
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-[#E8E5E1] bg-[#F4F4F5] text-[#A1A1AA]"
+                            }`}>
+                              {a.scannedAt ? "✓" : "○"} {a.round ?? `Round ${i + 1}`}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {isRejected && attended.length > 0 && (
+                        <p className="mt-1.5 text-xs text-[#A1A1AA]">
+                          Attended {attended.length} round{attended.length !== 1 ? "s" : ""} — not selected after{" "}
+                          {attended[attended.length - 1]?.round ?? "final round"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Recent jobs & events ── */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Recent jobs */}
+          <div className="rounded-2xl border border-[#E8E5E1] bg-white">
+            <div className="flex items-center justify-between border-b border-[#F4F0EB] px-5 py-4">
+              <h2 className="text-sm font-semibold text-[#18181B]">Recent Job Openings</h2>
+              <Link href="/jobs" className="text-xs text-[#71717A] hover:text-[#18181B] transition-colors">
+                View all →
+              </Link>
+            </div>
+            {recentJobs.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm text-[#A1A1AA]">No active jobs right now</p>
+                <p className="text-xs text-[#C4C4C4] mt-1">Check back later for new opportunities</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#F4F0EB]">
+                {recentJobs.map((job) => (
+                  <Link
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    className="flex items-center justify-between px-5 py-3.5 hover:bg-[#FAFAF9] transition-colors group"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#18181B] truncate group-hover:text-amber-700 transition-colors">
+                        {job.title}
+                      </p>
+                      <p className="text-xs text-[#A1A1AA] mt-0.5">{job.companyName} · {job.salary} LPA</p>
+                    </div>
+                    {job.deadline && (
+                      <span className="ml-3 shrink-0 text-[11px] text-[#A1A1AA]">
+                        Due {format(new Date(job.deadline), "MMM d")}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming events */}
+          <div className="rounded-2xl border border-[#E8E5E1] bg-white">
+            <div className="flex items-center justify-between border-b border-[#F4F0EB] px-5 py-4">
+              <h2 className="text-sm font-semibold text-[#18181B]">Upcoming Events</h2>
+              <Link href="/schedule" className="text-xs text-[#71717A] hover:text-[#18181B] transition-colors">
+                View all →
+              </Link>
+            </div>
+            {upcomingEventsList.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm text-[#A1A1AA]">No upcoming events</p>
+                <p className="text-xs text-[#C4C4C4] mt-1">Events will appear here when scheduled</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#F4F0EB]">
+                {upcomingEventsList.map((event) => (
+                  <div key={event.id} className="flex items-center justify-between px-5 py-3.5">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#18181B] truncate">{event.title}</p>
+                      <p className="text-xs text-[#A1A1AA] mt-0.5">{event.location ?? event.type}</p>
+                    </div>
+                    <span className="ml-3 shrink-0 text-[11px] text-[#71717A] font-medium">
+                      {format(new Date(event.date), "MMM d, h:mm a")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
     </main>
   )

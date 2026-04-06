@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import QRCode from "qrcode"
+import { canApplyToTier, getHighestTier } from "@/lib/placement-rules"
 
 export async function GET(
     request: NextRequest,
@@ -126,19 +127,28 @@ export async function POST(
             )
         }
 
-        // Get user's profile
-        const profile = await prisma.profile.findUnique({
-            where: { userId: session.user.id },
-            select: {
-                id: true,
-                resume: true,
-                cgpa: true,
-                branch: true,
-                batch: true,
-                activeBacklogs: true,
-                kycStatus: true
-            }
-        })
+        // Get user's profile and placement status
+        const [profile, userPlacements] = await Promise.all([
+            prisma.profile.findUnique({
+                where: { userId: session.user.id },
+                select: {
+                    id: true,
+                    resume: true,
+                    resumeUpload: true,
+                    finalCgpa: true,
+                    cgpa: true,
+                    branch: true,
+                    batch: true,
+                    activeBacklogs: true,
+                    hasBacklogs: true,
+                    kycStatus: true
+                }
+            }),
+            prisma.placement.findMany({
+                where: { userId: session.user.id },
+                select: { tier: true, isException: true }
+            })
+        ])
 
         if (!profile) {
             return NextResponse.json(
@@ -155,10 +165,21 @@ export async function POST(
             )
         }
 
-        // Check eligibility
-        if (job.minCGPA && profile.cgpa && profile.cgpa < job.minCGPA) {
+        // Check tier eligibility
+        const highestTierPlacement = getHighestTier(userPlacements.filter((p) => !p.isException))
+        const tierCheck = canApplyToTier(highestTierPlacement, job.tier, job.isDreamOffer)
+        if (!tierCheck.eligible) {
             return NextResponse.json(
-                { error: `Minimum CGPA of ${job.minCGPA} required` },
+                { error: tierCheck.reason },
+                { status: 400 }
+            )
+        }
+
+        // Check CGPA (use finalCgpa if available, fall back to cgpa)
+        const cgpa = profile.finalCgpa ?? profile.cgpa ?? 0
+        if (job.minCGPA && cgpa < job.minCGPA) {
+            return NextResponse.json(
+                { error: `Minimum CGPA of ${job.minCGPA} required. Your CGPA: ${cgpa.toFixed(2)}` },
                 { status: 400 }
             )
         }
@@ -179,7 +200,8 @@ export async function POST(
             )
         }
 
-        if (job.maxBacklogs === 0 && profile.activeBacklogs) {
+        const hasActiveBacklogs = profile.activeBacklogs || profile.hasBacklogs === "yes"
+        if (job.maxBacklogs !== null && job.maxBacklogs === 0 && hasActiveBacklogs) {
             return NextResponse.json(
                 { error: "No active backlogs allowed for this job" },
                 { status: 400 }
@@ -191,7 +213,7 @@ export async function POST(
             data: {
                 jobId: id,
                 userId: session.user.id,
-                resumeUsed: profile.resume || null
+                resumeUsed: profile.resumeUpload || profile.resume || null
             }
         })
 

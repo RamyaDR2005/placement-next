@@ -15,7 +15,6 @@ export default async function AdminDashboardPage() {
     totalStudents,
     verifiedStudents,
     pendingVerifications,
-    totalRecruiters,
     activeJobPostings,
     totalApplications,
     placedStudents,
@@ -45,12 +44,7 @@ export default async function AdminDashboardPage() {
       where: { kycStatus: 'PENDING' }
     }),
 
-    // Total recruiters
-    prisma.user.count({
-      where: { role: 'RECRUITER' }
-    }),
-
-    // Active job postings (fixed: was using scheduleEvent)
+    // Active job postings
     prisma.job.count({
       where: {
         status: 'ACTIVE',
@@ -165,7 +159,6 @@ export default async function AdminDashboardPage() {
       totalStudents,
       verifiedStudents,
       pendingVerifications,
-      totalRecruiters,
       activeJobPostings,
       totalApplications,
       placedStudents,

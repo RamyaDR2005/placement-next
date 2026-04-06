@@ -23,7 +23,6 @@ export default async function AdminSettingsPage() {
   return (
     <AdminSettingsView
       adminSettings={{
-        activeAdmissionYears: adminSettings.activeAdmissionYears,
         collegeCode: adminSettings.collegeCode,
       }}
       siteSettings={{

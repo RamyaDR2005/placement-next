@@ -1,9 +1,6 @@
 import { z } from "zod"
 
 export const adminSettingsSchema = z.object({
-  activeAdmissionYears: z
-    .array(z.string().regex(/^\d{2}$/, "Must be 2-digit year"))
-    .min(1, "At least one year required"),
   collegeCode: z.string().min(2).max(4),
 })
 

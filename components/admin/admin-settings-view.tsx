@@ -13,16 +13,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Save, ShieldCheck, Globe } from "lucide-react"
 
-const ADMISSION_YEARS = ["20", "21", "22", "23", "24", "25", "26"] as const
-
 interface AdminSettingsProps {
   adminSettings: {
-    activeAdmissionYears: string[]
     collegeCode: string
   }
   siteSettings: {
@@ -38,10 +34,7 @@ export function AdminSettingsView({
   adminSettings: initialAdminSettings,
   siteSettings: initialSiteSettings,
 }: AdminSettingsProps) {
-  // Batch Access Control state
-  const [activeYears, setActiveYears] = useState<string[]>(
-    initialAdminSettings.activeAdmissionYears
-  )
+  // Admin settings state
   const [collegeCode, setCollegeCode] = useState(
     initialAdminSettings.collegeCode
   )
@@ -65,18 +58,7 @@ export function AdminSettingsView({
   )
   const [savingSite, setSavingSite] = useState(false)
 
-  function handleYearToggle(year: string, checked: boolean) {
-    setActiveYears((prev) =>
-      checked ? [...prev, year] : prev.filter((y) => y !== year)
-    )
-  }
-
   async function saveAdminSettings() {
-    if (activeYears.length === 0) {
-      toast.error("At least one admission year must be selected")
-      return
-    }
-
     setSavingAdmin(true)
     try {
       const response = await fetch("/api/admin/settings", {
@@ -84,10 +66,7 @@ export function AdminSettingsView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "admin",
-          data: {
-            activeAdmissionYears: activeYears,
-            collegeCode,
-          },
+          data: { collegeCode },
         }),
       })
 
@@ -97,7 +76,7 @@ export function AdminSettingsView({
         throw new Error(result.error || "Failed to save settings")
       }
 
-      toast.success("Batch access control settings saved")
+      toast.success("System settings saved")
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to save settings"
@@ -141,22 +120,20 @@ export function AdminSettingsView({
     }
   }
 
-  const previewYear = activeYears.length > 0 ? activeYears[0] : "XX"
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">
-          Manage batch access control and site configuration
+          Manage system configuration and site settings
         </p>
       </div>
 
-      <Tabs defaultValue="batch" className="space-y-4">
+      <Tabs defaultValue="system" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="batch" className="gap-2">
+          <TabsTrigger value="system" className="gap-2">
             <ShieldCheck className="size-4" />
-            Batch Access Control
+            System
           </TabsTrigger>
           <TabsTrigger value="site" className="gap-2">
             <Globe className="size-4" />
@@ -164,45 +141,18 @@ export function AdminSettingsView({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="batch">
+        <TabsContent value="system">
           <Card>
             <CardHeader>
-              <CardTitle>Batch Access Control</CardTitle>
+              <CardTitle>System Settings</CardTitle>
               <CardDescription>
-                Control which admission year batches can access the portal.
-                Students are identified by their USN pattern.
+                Configure system-level settings. Batch access is managed via{" "}
+                <a href="/admin/batches" className="underline underline-offset-4 hover:text-foreground">
+                  Batch Management
+                </a>.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label className="text-base font-medium">
-                  Active Admission Years
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Select which admission year batches should have access to the
-                  placement portal.
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  {ADMISSION_YEARS.map((year) => (
-                    <div key={year} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`year-${year}`}
-                        checked={activeYears.includes(year)}
-                        onCheckedChange={(checked) =>
-                          handleYearToggle(year, checked === true)
-                        }
-                      />
-                      <Label
-                        htmlFor={`year-${year}`}
-                        className="cursor-pointer font-normal"
-                      >
-                        20{year}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="collegeCode">College Code</Label>
                 <Input
@@ -214,46 +164,20 @@ export function AdminSettingsView({
                   maxLength={4}
                 />
                 <p className="text-sm text-muted-foreground">
-                  The college code prefix used in USN numbers (2-4 characters).
+                  The college code prefix used in USN numbers (2–4 characters).
                 </p>
-              </div>
-
-              <div className="rounded-md border bg-muted/50 p-4">
-                <p className="text-sm font-medium">USN Access Preview</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Students with USNs like{" "}
-                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">
-                    {collegeCode}
-                    {previewYear}XXYYY
-                  </code>{" "}
-                  will have access
-                </p>
-                {activeYears.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {activeYears
-                      .sort()
-                      .map((year) => (
-                        <span
-                          key={year}
-                          className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
-                        >
-                          {collegeCode}{year}XXYYY
-                        </span>
-                      ))}
-                  </div>
-                )}
               </div>
 
               <Button
                 onClick={saveAdminSettings}
-                disabled={savingAdmin || activeYears.length === 0}
+                disabled={savingAdmin || !collegeCode.trim()}
               >
                 {savingAdmin ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : (
                   <Save className="mr-2 size-4" />
                 )}
-                Save Batch Settings
+                Save System Settings
               </Button>
             </CardContent>
           </Card>

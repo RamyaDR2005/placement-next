@@ -7,20 +7,14 @@ export default async function AdminSchedulePage() {
   const session = await auth()
 
   return (
-    <main className="flex-1 bg-muted/30 min-h-screen">
-      <div className="container mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Schedule Management</h1>
-          <p className="text-muted-foreground">
-            Manage placement events, interviews, and schedules for all students
-          </p>
-        </div>
-        
-        <Scheduler 
-          isAdmin={true} 
-          userId={session!.user.id}
-        />
+    <div className="px-6 py-6 max-w-6xl mx-auto space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">Schedule Management</h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          Manage placement events, interviews, and schedules
+        </p>
       </div>
-    </main>
+      <Scheduler isAdmin={true} userId={session!.user.id} />
+    </div>
   )
 }

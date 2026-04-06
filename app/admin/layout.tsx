@@ -16,14 +16,14 @@ export default async function AdminLayout({
   }
 
   // Check if user has admin role
-  if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+  if (session.user.role !== "ADMIN") {
     redirect("/dashboard") // Redirect non-admins to dashboard
   }
 
   return (
     <SidebarProvider>
       <AdminSidebar />
-      <SidebarInset className="flex flex-1 flex-col">
+      <SidebarInset className="flex flex-1 flex-col min-h-screen bg-zinc-50/50">
         {children}
       </SidebarInset>
     </SidebarProvider>

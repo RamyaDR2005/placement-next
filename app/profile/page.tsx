@@ -1,28 +1,22 @@
+export const dynamic = "force-dynamic"
+
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { ProfileCompletion } from "@/components/profile-completion"
 
 export default async function ProfilePage() {
   const session = await auth()
-
-  if (!session?.user?.id) {
-    redirect("/login")
-  }
-
-  // Check if user has a profile
-  const profile = await prisma.profile.findUnique({
-    where: { userId: session.user.id }
-  })
-
-  // Allow viewing/editing profile even if complete
-  // The ProfileCompletion component will handle the display mode
+  if (!session?.user?.id) redirect("/login")
 
   return (
-    <main className="flex-1 bg-background min-h-screen">
-      <div className="container mx-auto py-8 flex flex-col gap-6">
-        <ProfileCompletion />
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
+      <div className="mb-6">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">My Profile</h1>
+        <p className="mt-1 text-sm text-[#71717A]">
+          Complete your profile to unlock all placement opportunities
+        </p>
       </div>
-    </main>
+      <ProfileCompletion />
+    </div>
   )
 }

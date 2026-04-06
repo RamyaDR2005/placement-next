@@ -139,11 +139,12 @@ export default async function StudentsPage({
   }).toString()}`
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex h-16 shrink-0 items-center gap-2 px-4 border-b">
-        <h1 className="text-3xl font-bold">Student Management</h1>
+    <div className="px-6 py-6 space-y-6 max-w-7xl mx-auto">
+      <div>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">Student Management</h1>
+        <p className="mt-1 text-sm text-zinc-500">View, filter, and verify student profiles</p>
       </div>
-      <div className="container mx-auto max-w-7xl px-4 py-6">
+      <div>
         <StudentsFilterTable
           students={filteredStudents as any}
           adminId={session!.user.id}

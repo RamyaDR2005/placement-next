@@ -5,7 +5,7 @@
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 
-export type UserRole = "STUDENT" | "ADMIN" | "SUPER_ADMIN"
+export type UserRole = "STUDENT" | "ADMIN"
 
 /**
  * Get the current user or return unauthorized response
@@ -61,7 +61,7 @@ export async function requireRole(requiredRole: UserRole | UserRole[]) {
  * Check if the current user is an admin
  */
 export async function requireAdmin() {
-    return await requireRole(["ADMIN", "SUPER_ADMIN"])
+    return await requireRole(["ADMIN"])
 }
 
 /**

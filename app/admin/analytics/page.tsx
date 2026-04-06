@@ -1,11 +1,9 @@
 export const dynamic = "force-dynamic"
 
 import { prisma } from "@/lib/prisma"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { TrendingUp, Briefcase, Building, GraduationCap, Users, Award } from "lucide-react"
+import { TrendingUp, Briefcase, Building, Users, Award } from "lucide-react"
 import { AnalyticsCharts } from "@/components/admin/analytics-charts"
 import { getActiveBatches } from "@/lib/batch"
 
@@ -186,69 +184,71 @@ export default async function AnalyticsPage({
   ]
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex h-16 shrink-0 items-center justify-between gap-2 px-4 border-b">
-        <h1 className="text-3xl font-bold">Analytics & Reports</h1>
+    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">Analytics & Reports</h1>
+          <p className="mt-1 text-sm text-zinc-500">Placement statistics and trend analysis</p>
+        </div>
         <Link href="/admin/analytics/companies">
-          <Button variant="outline" size="sm">
-            <Building className="w-4 h-4 mr-2" />
-            Company-wise Analysis
+          <Button variant="outline" size="sm" className="h-9 text-xs border-[#E8E5E1]">
+            <Building className="w-3.5 h-3.5 mr-1.5" />
+            Company-wise
           </Button>
         </Link>
       </div>
 
-      <div className="container mx-auto max-w-7xl px-4 py-6 space-y-6">
+      <div className="space-y-6">
         {/* Batch Filter */}
         {activeBatches.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-muted-foreground">Filter by batch:</span>
+            <span className="text-xs text-zinc-500 font-medium uppercase tracking-wide">Batch:</span>
             <Link href="/admin/analytics">
-              <Badge variant={!batchId ? "default" : "outline"} className="cursor-pointer">All Batches</Badge>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${!batchId ? "bg-[#18181B] text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}>
+                All Batches
+              </span>
             </Link>
             {activeBatches.map((b) => (
               <Link key={b.id} href={`/admin/analytics?batchId=${b.id}`}>
-                <Badge variant={batchId === b.id ? "default" : "outline"} className="cursor-pointer">{b.name}</Badge>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${batchId === b.id ? "bg-[#18181B] text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}>
+                  {b.name}
+                </span>
               </Link>
             ))}
           </div>
         )}
 
         {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {kpiCards.map(({ label, value, sub, icon: Icon }) => (
-            <Card key={label}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{label}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
-                {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
-              </CardContent>
-            </Card>
+            <div key={label} className="rounded-xl border border-[#E8E5E1] bg-white px-4 py-4">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs text-zinc-500 font-medium">{label}</p>
+                <Icon className="h-3.5 w-3.5 text-zinc-400" />
+              </div>
+              <p className="text-2xl font-bold tracking-tight text-[#18181B]">{value}</p>
+              {sub && <p className="text-xs text-zinc-400 mt-0.5">{sub}</p>}
+            </div>
           ))}
         </div>
 
         {/* Tier Breakdown */}
         {tierData.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-4">
             {(["DREAM", "TIER_1", "TIER_2", "TIER_3"] as const).map((tier) => {
               const stat = tierData.find((t) => t.tier === tier)
               const labels = { DREAM: "Dream", TIER_1: "Tier 1", TIER_2: "Tier 2", TIER_3: "Tier 3" }
               const ranges = { DREAM: "> ₹10 LPA", TIER_1: "> ₹9 LPA", TIER_2: "₹5–9 LPA", TIER_3: "≤ ₹5 LPA" }
+              const colors = { DREAM: "text-violet-600", TIER_1: "text-emerald-600", TIER_2: "text-blue-600", TIER_3: "text-amber-600" }
               return (
-                <Card key={tier}>
-                  <CardContent className="pt-4 pb-4 flex flex-col items-center">
-                    <Badge variant={tier === "DREAM" ? "destructive" : tier === "TIER_1" ? "default" : "secondary"}>
-                      {labels[tier]}
-                    </Badge>
-                    <div className="text-3xl font-bold mt-2">{stat?.count ?? 0}</div>
-                    <p className="text-xs text-muted-foreground">{ranges[tier]}</p>
-                    {stat?.avgSalary ? (
-                      <p className="text-xs text-muted-foreground">Avg {stat.avgSalary.toFixed(1)} LPA</p>
-                    ) : null}
-                  </CardContent>
-                </Card>
+                <div key={tier} className="rounded-xl border border-[#E8E5E1] bg-white px-4 py-4 text-center">
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-wide font-medium">{labels[tier]}</p>
+                  <p className={`text-3xl font-bold mt-1 tracking-tight ${colors[tier]}`}>{stat?.count ?? 0}</p>
+                  <p className="text-xs text-zinc-400">{ranges[tier]}</p>
+                  {stat?.avgSalary ? (
+                    <p className="text-xs text-zinc-400 mt-0.5">Avg {stat.avgSalary.toFixed(1)} LPA</p>
+                  ) : null}
+                </div>
               )
             })}
           </div>
