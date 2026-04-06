@@ -171,12 +171,20 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
   events: {
     async createUser({ user }) {
+      // Only send verification email for credentials-based users (emailVerified = null).
+      // Google OAuth users are auto-verified by PrismaAdapter — skip them.
       if (user.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-        })
-        if (dbUser && !dbUser.emailVerified) {
-          await sendVerificationEmail(user.email, user.name || "User")
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+          })
+          if (dbUser && !dbUser.emailVerified) {
+            await sendVerificationEmail(user.email, user.name || "User")
+          }
+        } catch (err) {
+          // Non-fatal: email service may not be configured in dev.
+          // Do NOT let this throw — it would abort the OAuth sign-in.
+          console.error("[createUser event] Failed to send verification email:", err)
         }
       }
     },

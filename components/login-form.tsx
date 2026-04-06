@@ -59,6 +59,19 @@ export function LoginForm({
       toast.error("Invalid verification link.")
     } else if (error === "verification-failed") {
       toast.error("Email verification failed. Please try again.")
+    } else if (error) {
+      // NextAuth OAuth error codes
+      const oauthErrors: Record<string, string> = {
+        OAuthSignin:        "Could not start Google sign-in. Check your OAuth credentials.",
+        OAuthCallback:      "Google sign-in failed. Verify your redirect URI matches the Google Cloud Console.",
+        OAuthCreateAccount: "Could not create account via Google. Email may already be registered.",
+        OAuthAccountNotLinked: "This email is registered with a different sign-in method.",
+        Callback:           "An error occurred during sign-in. Please try again.",
+        AccessDenied:       "Access denied. You may not have permission to sign in.",
+        Configuration:      "Server configuration error. Contact support.",
+        Default:            "Sign-in failed. Please try again.",
+      }
+      toast.error(oauthErrors[error] ?? `Sign-in error: ${error}`)
     }
   }, [searchParams])
 
