@@ -78,20 +78,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  cookies: {
-    sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
   callbacks: {
     async jwt({ token, user, trigger }) {
       // ── Initial sign-in ─────────────────────────────────────────────────
