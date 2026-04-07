@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -285,65 +284,44 @@ export function PlacementManagementView() {
 
     return (
         <div className="space-y-6">
-            {/* Stats */}
-            <div className="grid gap-4 md:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Placed</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{totalPlaced}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg Package</CardTitle>
-                        <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{avgPackage.toFixed(1)} LPA</div>
-                    </CardContent>
-                </Card>
-
-                {tierStats
-                    .filter((s) => ["DREAM", "TIER_1"].includes(s.tier))
-                    .map((stat) => (
-                        <Card key={stat.tier}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                    {TIER_LABELS[stat.tier] || stat.tier}
-                                </CardTitle>
-                                <Trophy className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stat._count.tier}</div>
-                                <p className="text-xs text-muted-foreground">
-                                    Avg {(stat._avg.salary || 0).toFixed(1)} LPA
-                                </p>
-                            </CardContent>
-                        </Card>
-                    ))}
+            {/* Summary stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                    { label: "Total Placed", value: String(totalPlaced), icon: Users, color: "text-[#18181B]" },
+                    { label: "Avg Package", value: `${avgPackage.toFixed(1)} LPA`, icon: IndianRupee, color: "text-blue-600" },
+                    ...tierStats.filter((s) => ["DREAM", "TIER_1"].includes(s.tier)).map((stat) => ({
+                        label: TIER_LABELS[stat.tier] ?? stat.tier,
+                        value: String(stat._count.tier),
+                        icon: Trophy,
+                        color: stat.tier === "DREAM" ? "text-violet-600" : "text-emerald-600",
+                        sub: `Avg ${(stat._avg.salary || 0).toFixed(1)} LPA`,
+                    })),
+                ].map(({ label, value, icon: Icon, color, sub }: any) => (
+                    <div key={label} className="rounded-xl border border-[#E8E5E1] bg-white px-4 py-4">
+                        <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs text-zinc-500 font-medium">{label}</p>
+                            <Icon className="h-3.5 w-3.5 text-zinc-400" />
+                        </div>
+                        <p className={`text-2xl font-bold tracking-tight ${color}`}>{value}</p>
+                        {sub && <p className="text-xs text-zinc-400 mt-0.5">{sub}</p>}
+                    </div>
+                ))}
             </div>
 
             {/* Tier breakdown */}
             {tierStats.length > 0 && (
-                <div className="grid gap-3 md:grid-cols-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {["DREAM", "TIER_1", "TIER_2", "TIER_3"].map((tier) => {
                         const stat = tierStats.find((s) => s.tier === tier)
+                        const colors: Record<string, string> = {
+                            DREAM: "text-violet-600", TIER_1: "text-emerald-600",
+                            TIER_2: "text-blue-600", TIER_3: "text-amber-600",
+                        }
                         return (
-                            <div
-                                key={tier}
-                                className={`rounded-lg px-4 py-3 ${TIER_COLORS[tier] || "bg-muted"}`}
-                            >
-                                <p className="text-sm font-medium">{TIER_LABELS[tier]}</p>
-                                <p className="text-xl font-bold">{stat?._count.tier ?? 0}</p>
-                                {stat && (
-                                    <p className="text-xs opacity-75">
-                                        Avg {(stat._avg.salary || 0).toFixed(1)} LPA
-                                    </p>
-                                )}
+                            <div key={tier} className="rounded-xl border border-[#E8E5E1] bg-white px-4 py-3 text-center">
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-wide font-medium">{TIER_LABELS[tier]?.split(" ")[0]}</p>
+                                <p className={`text-2xl font-bold mt-1 tracking-tight ${colors[tier]}`}>{stat?._count.tier ?? 0}</p>
+                                {stat && <p className="text-xs text-zinc-400">Avg {(stat._avg.salary || 0).toFixed(1)} LPA</p>}
                             </div>
                         )
                     })}
@@ -351,32 +329,32 @@ export function PlacementManagementView() {
             )}
 
             {/* Table with filters */}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>Placement Records</CardTitle>
-                            <CardDescription>{total} placement{total !== 1 ? "s" : ""} recorded</CardDescription>
-                        </div>
-                        <Button onClick={() => setShowDialog(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Record Placement
-                        </Button>
+            <div className="rounded-2xl border border-[#E8E5E1] bg-white overflow-hidden">
+                {/* Card header */}
+                <div className="px-5 py-4 border-b border-[#E8E5E1] flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p className="text-sm font-semibold text-[#18181B]">Placement Records</p>
+                        <p className="text-xs text-zinc-500">{total} placement{total !== 1 ? "s" : ""} recorded</p>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-wrap gap-3 mb-4">
-                        <div className="relative flex-1 min-w-48">
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search student or company..."
-                                value={search}
-                                onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                                className="pl-10"
-                            />
-                        </div>
+                    <Button onClick={() => setShowDialog(true)} className="h-9 bg-[#18181B] hover:bg-zinc-800 text-white text-xs gap-1.5">
+                        <Plus className="h-3.5 w-3.5" />
+                        Record Placement
+                    </Button>
+                </div>
+
+                <div className="px-5 py-3 border-b border-[#E8E5E1] flex flex-col sm:flex-row flex-wrap gap-2">
+                    <div className="relative flex-1 min-w-0 sm:min-w-48">
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search student or company..."
+                            value={search}
+                            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                            className="pl-10 h-9 border-[#E8E5E1] w-full"
+                        />
+                    </div>
+                    <div className="flex gap-2">
                         <Select value={filterTier} onValueChange={(v) => { setFilterTier(v); setPage(1) }}>
-                            <SelectTrigger className="w-44">
+                            <SelectTrigger className="w-36 h-9 border-[#E8E5E1]">
                                 <SelectValue placeholder="All Tiers" />
                             </SelectTrigger>
                             <SelectContent>
@@ -391,12 +369,14 @@ export function PlacementManagementView() {
                             placeholder="Batch (e.g. 2025)"
                             value={filterBatch}
                             onChange={(e) => { setFilterBatch(e.target.value); setPage(1) }}
-                            className="w-36"
+                            className="w-32 h-9 border-[#E8E5E1]"
                         />
                     </div>
+                </div>
 
-                    <div className="rounded-md border">
-                        <Table>
+                <div className="overflow-x-auto">
+                <div className="min-w-[650px]">
+                    <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Student</TableHead>
@@ -491,23 +471,23 @@ export function PlacementManagementView() {
                                 )}
                             </TableBody>
                         </Table>
-                    </div>
+                </div>
+                </div>
 
-                    {totalPages > 1 && (
-                        <div className="flex justify-center gap-2 mt-4">
-                            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-                                Previous
-                            </Button>
-                            <span className="flex items-center px-3 text-sm">
-                                Page {page} of {totalPages}
-                            </span>
-                            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-                                Next
-                            </Button>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                {totalPages > 1 && (
+                    <div className="flex justify-center gap-2 px-5 py-3 border-t border-[#E8E5E1]">
+                        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="h-8 text-xs border-[#E8E5E1]">
+                            Previous
+                        </Button>
+                        <span className="flex items-center px-3 text-xs text-zinc-500">
+                            Page {page} of {totalPages}
+                        </span>
+                        <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)} className="h-8 text-xs border-[#E8E5E1]">
+                            Next
+                        </Button>
+                    </div>
+                )}
+            </div>
 
             {/* Record Placement Dialog */}
             <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) resetForm() }}>

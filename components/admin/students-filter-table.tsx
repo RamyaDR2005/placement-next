@@ -138,75 +138,80 @@ export function StudentsFilterTable({
   return (
     <div className="space-y-4">
       {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+        {/* Search — full width on mobile */}
+        <div className="relative w-full sm:w-64">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search name, USN, email..."
             defaultValue={filters.q}
             onChange={(e) => debouncedSearch(e.target.value)}
-            className="pl-8 w-64"
+            className="pl-8 w-full"
           />
         </div>
 
-        {activeBatches.length > 0 && (
-          <Select value={filters.batchId || "all"} onValueChange={(v) => pushFilter({ batchId: v })}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Batch" />
+        {/* Selects — wrap naturally */}
+        <div className="flex flex-wrap gap-2">
+          {activeBatches.length > 0 && (
+            <Select value={filters.batchId || "all"} onValueChange={(v) => pushFilter({ batchId: v })}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Batch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Batches</SelectItem>
+                {activeBatches.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Select value={filters.kycStatus || "all"} onValueChange={(v) => pushFilter({ kycStatus: v })}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="KYC Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Batches</SelectItem>
-              {activeBatches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+              <SelectItem value="all">All KYC</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
+              <SelectItem value="VERIFIED">Verified</SelectItem>
+              <SelectItem value="REJECTED">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filters.branch || "all"} onValueChange={(v) => pushFilter({ branch: v })}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b} value={b}>{b}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        )}
 
-        <Select value={filters.kycStatus || "all"} onValueChange={(v) => pushFilter({ kycStatus: v })}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="KYC Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All KYC</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
-            <SelectItem value="VERIFIED">Verified</SelectItem>
-            <SelectItem value="REJECTED">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={filters.placed || "all"} onValueChange={(v) => pushFilter({ placed: v })}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Placement" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Students</SelectItem>
+              <SelectItem value="yes">Placed</SelectItem>
+              <SelectItem value="no">Unplaced</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Select value={filters.branch || "all"} onValueChange={(v) => pushFilter({ branch: v })}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Branch" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Branches</SelectItem>
-            {branches.map((b) => (
-              <SelectItem key={b} value={b}>{b}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {hasFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
+              <X className="w-3.5 h-3.5 mr-1" />
+              Clear
+            </Button>
+          )}
+        </div>
 
-        <Select value={filters.placed || "all"} onValueChange={(v) => pushFilter({ placed: v })}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Placement" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Students</SelectItem>
-            <SelectItem value="yes">Placed</SelectItem>
-            <SelectItem value="no">Unplaced</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            <X className="w-3.5 h-3.5 mr-1" />
-            Clear
-          </Button>
-        )}
-
-        <div className="ml-auto flex items-center gap-2">
+        {/* Right: count + export */}
+        <div className="flex items-center gap-2 sm:ml-auto">
           <span className="text-sm text-muted-foreground">{totalCount} students</span>
           <Button variant="outline" size="sm" asChild>
             <a href={exportUrl} download>
@@ -217,8 +222,9 @@ export function StudentsFilterTable({
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-lg border">
+      {/* Table — horizontal scroll on small screens */}
+      <div className="rounded-lg border overflow-x-auto">
+        <div className="min-w-[700px]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -295,6 +301,7 @@ export function StudentsFilterTable({
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Pagination */}

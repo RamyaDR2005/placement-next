@@ -116,14 +116,14 @@ export function AdminDashboardView({ data }: { data: AdminDashboardData }) {
   return (
     <div className="min-h-full bg-zinc-50/50">
       {/* Top bar */}
-      <div className="bg-white border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
+      <div className="bg-white border-b border-zinc-100 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">
             {greeting}, {user.name.split(" ")[0]}
           </h1>
           <p className="text-sm text-zinc-500 mt-0.5">{siteSettings.placementSeasonName}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant={siteSettings.registrationOpen ? "default" : "secondary"}
             className={siteSettings.registrationOpen

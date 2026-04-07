@@ -152,12 +152,10 @@ export function BatchManagementView({ batches, activeCount, maxActiveBatches }: 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-muted-foreground">
-            {activeCount} of {maxActiveBatches} active batches. Archive a batch before activating a new one.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-zinc-500">
+          {activeCount} of {maxActiveBatches} active batches. Archive a batch before activating a new one.
+        </p>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -265,11 +263,9 @@ export function BatchManagementView({ batches, activeCount, maxActiveBatches }: 
       )}
 
       {batches.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No batches yet. Create one to get started.
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-[#E8E5E1] bg-white py-12 text-center text-sm text-zinc-500">
+          No batches yet. Create one to get started.
+        </div>
       )}
     </div>
   )

@@ -4,8 +4,6 @@ import { Metadata } from "next"
 import { redirect, notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
@@ -133,74 +131,61 @@ export default async function JobApplicantsPage({ params }: { params: Promise<{ 
     const categoryLabel = job.category.replace(/_/g, " ")
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
-            <div className="flex items-center gap-4 mb-6">
+        <div className="px-6 py-6 space-y-6 max-w-7xl mx-auto">
+            {/* Back nav */}
+            <div className="flex items-center gap-3">
                 <Link href="/admin/jobs">
-                    <Button variant="ghost" size="sm">
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Jobs
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-zinc-500 hover:text-[#18181B] h-8 text-xs">
+                        <ArrowLeft className="h-3.5 w-3.5" /> Jobs
                     </Button>
                 </Link>
             </div>
 
-            {/* Job Summary */}
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <CardTitle className="text-2xl">{job.title}</CardTitle>
-                            <CardDescription className="mt-2">
-                                {job.companyName} • {job.location}
-                            </CardDescription>
-                        </div>
-                        <div className="flex gap-2">
-                            <Badge variant={job.isDreamOffer ? "destructive" : "default"}>
-                                {job.isDreamOffer ? "Dream Offer" : tierLabel}
-                            </Badge>
-                            <Badge variant="outline">{categoryLabel}</Badge>
-                            <Badge variant={job.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                                {job.status}
-                            </Badge>
-                        </div>
+            {/* Job header card */}
+            <div className="rounded-2xl border border-[#E8E5E1] bg-white px-6 py-5 space-y-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">{job.title}</h1>
+                        <p className="mt-1 text-sm text-zinc-500">{job.companyName} · {job.location}</p>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="text-center p-3 bg-muted rounded-lg">
-                            <p className="text-2xl font-bold">{job.applications.length}</p>
-                            <p className="text-muted-foreground">Active Applicants</p>
-                        </div>
-                        <div className="text-center p-3 bg-muted rounded-lg">
-                            <p className="text-2xl font-bold text-red-600">{removedCount}</p>
-                            <p className="text-muted-foreground">Removed</p>
-                        </div>
-                        <div className="text-center p-3 bg-muted rounded-lg">
-                            <p className="text-2xl font-bold text-green-600">{placementsCount}</p>
-                            <p className="text-muted-foreground">Placed</p>
-                        </div>
-                        <div className="text-center p-3 bg-muted rounded-lg">
-                            <p className="text-2xl font-bold">₹{job.salary} LPA</p>
-                            <p className="text-muted-foreground">Package</p>
-                        </div>
+                    <div className="flex flex-wrap gap-2">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${job.isDreamOffer ? "bg-violet-50 text-violet-700 ring-violet-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"}`}>
+                            {job.isDreamOffer ? "Dream Offer" : tierLabel}
+                        </span>
+                        <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-zinc-100 text-zinc-600">
+                            {categoryLabel}
+                        </span>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${job.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-zinc-100 text-zinc-500 ring-zinc-200"}`}>
+                            {job.status}
+                        </span>
                     </div>
-                    <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
-                        <span>Min CGPA: {job.minCGPA || 'None'}</span>
-                        <span>•</span>
-                        <span>Branches: {job.allowedBranches?.length ? job.allowedBranches.join(', ') : 'All'}</span>
-                        <span>•</span>
-                        <span>Deadline: {job.deadline ? format(new Date(job.deadline), 'MMM dd, yyyy hh:mm a') : 'No deadline'}</span>
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
 
-            {/* Applicants Table with Export */}
-            <ApplicantsTable
-                jobId={job.id}
-                jobTitle={job.title}
-                applicants={applicants}
-            />
+                {/* Stat cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                        { label: "Active Applicants", value: job.applications.length, color: "text-[#18181B]" },
+                        { label: "Removed", value: removedCount, color: "text-red-600" },
+                        { label: "Placed", value: placementsCount, color: "text-emerald-600" },
+                        { label: "Package", value: `₹${job.salary} LPA`, color: "text-blue-600" },
+                    ].map(({ label, value, color }) => (
+                        <div key={label} className="rounded-xl border border-[#E8E5E1] bg-zinc-50/60 px-4 py-3 text-center">
+                            <p className={`text-xl font-bold tracking-tight ${color}`}>{value}</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">{label}</p>
+                        </div>
+                    ))}
+                </div>
 
-            {/* Announcements / Job Updates */}
+                <p className="text-xs text-zinc-400 flex flex-wrap gap-x-3 gap-y-1">
+                    <span>Min CGPA: {job.minCGPA || "None"}</span>
+                    <span>·</span>
+                    <span>Branches: {job.allowedBranches?.length ? job.allowedBranches.join(", ") : "All"}</span>
+                    <span>·</span>
+                    <span>Deadline: {job.deadline ? format(new Date(job.deadline), "MMM dd, yyyy hh:mm a") : "No deadline"}</span>
+                </p>
+            </div>
+
+            <ApplicantsTable jobId={job.id} jobTitle={job.title} applicants={applicants} />
             <JobAnnouncementsPanel jobId={job.id} />
         </div>
     )

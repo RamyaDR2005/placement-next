@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, Download, Filter } from "lucide-react"
+import { ChevronLeft, Download } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 
@@ -69,127 +68,124 @@ export function AttendanceListView({ jobs, rounds }: { jobs: Job[]; rounds: stri
   }
 
   return (
-    <main className="container mx-auto max-w-6xl px-4 py-8 space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link href="/admin/attendance">
-            <Button variant="ghost" size="sm"><ChevronLeft className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-500 hover:text-[#18181B]">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Attendance Records</h1>
-            <p className="text-sm text-muted-foreground">{total} total records</p>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">Attendance Records</h1>
+            <p className="mt-0.5 text-sm text-zinc-500">{total} total records</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCsv} className="gap-2">
-          <Download className="h-4 w-4" /> Export CSV
+        <Button variant="outline" size="sm" onClick={exportCsv} className="h-9 text-xs border-[#E8E5E1] gap-1.5">
+          <Download className="h-3.5 w-3.5" /> Export CSV
         </Button>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Filter className="h-4 w-4" /> Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Select value={filterJob} onValueChange={setFilterJob}>
-              <SelectTrigger className="w-56">
-                <SelectValue placeholder="All companies" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All companies</SelectItem>
-                {jobs.map((j) => (
-                  <SelectItem key={j.id} value={j.id}>
-                    {j.companyName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="flex flex-wrap gap-2">
+        <Select value={filterJob} onValueChange={setFilterJob}>
+          <SelectTrigger className="w-48 h-9 border-[#E8E5E1] text-sm">
+            <SelectValue placeholder="All companies" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All companies</SelectItem>
+            {jobs.map((j) => (
+              <SelectItem key={j.id} value={j.id}>{j.companyName}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-            <Select value={filterRound} onValueChange={setFilterRound}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="All rounds" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All rounds</SelectItem>
-                {rounds.map((r) => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Select value={filterRound} onValueChange={setFilterRound}>
+          <SelectTrigger className="w-44 h-9 border-[#E8E5E1] text-sm">
+            <SelectValue placeholder="All rounds" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All rounds</SelectItem>
+            {rounds.map((r) => (
+              <SelectItem key={r} value={r}>{r}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-            <Button
-              variant={scannedOnly ? "default" : "outline"}
-              size="sm"
-              onClick={() => setScannedOnly((p) => !p)}
-            >
-              Attended only
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <Button
+          variant={scannedOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setScannedOnly((p) => !p)}
+          className={`h-9 text-xs ${scannedOnly ? "bg-[#18181B] text-white" : "border-[#E8E5E1]"}`}
+        >
+          Attended only
+        </Button>
+      </div>
 
       {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="py-12 text-center text-muted-foreground text-sm">Loading…</div>
-          ) : records.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground text-sm">No records found</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-neutral-50">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Student</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">USN</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Company</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Round</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Scanned At</th>
+      <div className="rounded-2xl border border-[#E8E5E1] bg-white overflow-hidden">
+        {loading ? (
+          <div className="py-12 text-center text-zinc-500 text-sm">Loading…</div>
+        ) : records.length === 0 ? (
+          <div className="py-12 text-center text-zinc-500 text-sm">No records found</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="min-w-[640px]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#E8E5E1] bg-zinc-50/60">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500">Student</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500">USN</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500">Company</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500">Round</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500">Status</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-500">Scanned At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F0EDE8]">
+                {records.map((r) => (
+                  <tr key={r.id} className="hover:bg-zinc-50/40">
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-[#18181B] text-sm">{r.student.name}</p>
+                      <p className="text-xs text-zinc-500">{r.student.branch}</p>
+                    </td>
+                    <td className="px-5 py-3 font-mono text-xs text-zinc-600">{r.student.usn ?? "—"}</td>
+                    <td className="px-5 py-3">
+                      {r.job ? (
+                        <>
+                          <p className="text-sm text-[#18181B]">{r.job.company}</p>
+                          <p className="text-xs text-zinc-500">{r.job.title}</p>
+                        </>
+                      ) : "—"}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center rounded-full border border-[#E8E5E1] px-2 py-0.5 text-[10px] font-medium text-zinc-600">
+                        {r.round ?? "General"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      {r.scannedAt ? (
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                          ✓ Attended
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                          Pending
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-xs text-zinc-500">
+                      {r.scannedAt ? format(new Date(r.scannedAt), "dd MMM yyyy, hh:mm a") : "—"}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {records.map((r) => (
-                    <tr key={r.id} className="hover:bg-neutral-50/50">
-                      <td className="px-4 py-3">
-                        <p className="font-medium">{r.student.name}</p>
-                        <p className="text-xs text-muted-foreground">{r.student.branch}</p>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs">{r.student.usn ?? "—"}</td>
-                      <td className="px-4 py-3">
-                        {r.job ? (
-                          <>
-                            <p>{r.job.company}</p>
-                            <p className="text-xs text-muted-foreground">{r.job.title}</p>
-                          </>
-                        ) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs">
-                          {r.round ?? "General"}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        {r.scannedAt ? (
-                          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">✓ Attended</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs text-muted-foreground">Pending</Badge>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {r.scannedAt ? format(new Date(r.scannedAt), "dd MMM yyyy, hh:mm a") : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </main>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

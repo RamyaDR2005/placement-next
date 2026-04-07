@@ -31,22 +31,15 @@ export default async function KYCVerificationPage() {
   })
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex h-16 shrink-0 items-center gap-2 px-4 border-b">
-        <h1 className="text-3xl font-bold">KYC Verification Queue</h1>
+    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-[#18181B]">KYC Verification Queue</h1>
+        <p className="mt-1 text-sm text-zinc-500">Review and verify student profiles and documents</p>
       </div>
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6">
-          <p className="text-muted-foreground">
-            Review and verify student profiles and documents
-          </p>
-        </div>
-        
-        <KYCVerificationQueue 
-          pendingVerifications={pendingVerifications}
-          adminId={session!.user.id}
-        />
-      </div>
+      <KYCVerificationQueue
+        pendingVerifications={pendingVerifications}
+        adminId={session!.user.id}
+      />
     </div>
   )
 }

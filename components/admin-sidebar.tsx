@@ -18,7 +18,8 @@ import {
   LayoutDashboard,
   UserCheck,
   TrendingUp,
-  ChevronLeft,
+  ClipboardList,
+  Building2,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -42,38 +43,39 @@ const navGroups = [
     label: "Overview",
     items: [
       { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
-      { title: "Analytics", url: "/admin/analytics", icon: BarChart2 },
     ],
   },
   {
     label: "Students",
     items: [
       { title: "All Students", url: "/admin/students", icon: Users },
-      { title: "KYC Queue", url: "/admin/students/kyc", icon: UserCheck },
-      { title: "Batches", url: "/admin/batches", icon: GraduationCap },
+      { title: "Verify Students", url: "/admin/students/kyc", icon: UserCheck },
+      { title: "Record Placements", url: "/admin/placements", icon: TrendingUp },
     ],
   },
   {
     label: "Recruitment",
     items: [
-      { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
-      { title: "Placements", url: "/admin/placements", icon: TrendingUp },
-      { title: "Company Analysis", url: "/admin/analytics/companies", icon: BarChart2 },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { title: "Attendance", url: "/admin/attendance", icon: ScanLine },
+      { title: "Job Postings", url: "/admin/jobs", icon: Briefcase },
+      { title: "Attendance Scan", url: "/admin/attendance", icon: ScanLine, exact: true },
+      { title: "Attendance Records", url: "/admin/attendance/list", icon: ClipboardList },
       { title: "Schedule", url: "/admin/schedule", icon: Calendar },
-      { title: "Notifications", url: "/admin/notifications", icon: Bell },
     ],
   },
   {
-    label: "System",
+    label: "Reports",
     items: [
-      { title: "Backup", url: "/admin/backup", icon: Download },
-      { title: "Settings", url: "/admin/settings", icon: Settings },
+      { title: "Analytics", url: "/admin/analytics", icon: BarChart2 },
+      { title: "Company Analysis", url: "/admin/analytics/companies", icon: Building2 },
+      { title: "Export & Backup", url: "/admin/backup", icon: Download },
+    ],
+  },
+  {
+    label: "Admin",
+    items: [
+      { title: "Notifications", url: "/admin/notifications", icon: Bell },
+      { title: "Batches", url: "/admin/batches", icon: GraduationCap },
+      { title: "Site Settings", url: "/admin/settings", icon: Settings },
     ],
   },
 ]
@@ -123,7 +125,9 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {group.items.map((item) => {
-                  const isActive = pathname === item.url || pathname?.startsWith(item.url + "/")
+                  const isActive = (item as { url: string; exact?: boolean }).exact
+                    ? pathname === item.url
+                    : pathname === item.url || pathname?.startsWith(item.url + "/")
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
